@@ -16,8 +16,10 @@
 package org.topicquests.solr;
 import java.util.*;
 
+import org.nex.config.ConfigPullParser;
 import org.topicquests.solr.api.ISolrClient;
 import org.topicquests.solr.api.ISolrDataProvider;
+import org.topicquests.solr.api.ISolrQueryIterator;
 import org.topicquests.util.LoggingPlatform;
 import org.topicquests.util.Tracer;
 
@@ -33,9 +35,18 @@ public class SolrEnvironment {
 	private ISolrDataProvider database;
 
 	/**
-	 * 
+	 * @param p
 	 */
 	public SolrEnvironment(Hashtable<String,Object>p) {
+		init(p);
+	}
+	
+	public SolrEnvironment() {
+		ConfigPullParser p = new ConfigPullParser("config-props.xml");
+		init(p.getProperties());
+	}
+	
+	void init(Hashtable<String,Object>p) {
 		props = p;
 		try {
 			solr = new Solr3Client(getStringProperty("SolrURL")); //TODO Solr4Client for testing
@@ -49,8 +60,6 @@ public class SolrEnvironment {
 		}
 		logDebug("Started");
 	}
-	
-		
 	
 	public ISolrClient getSolrClient() {
 		return solr;
@@ -67,6 +76,15 @@ public class SolrEnvironment {
 		return (String)props.get(key);
 	}
 		
+	/**
+	 * Return a new {@link ISolrQueryIterator}
+	 * @return
+	 */
+	public ISolrQueryIterator getQueryIterator() {
+		return new SolrQueryIterator(this);
+	}
+	
+	
 	public void shutDown() {
 		//
 	}

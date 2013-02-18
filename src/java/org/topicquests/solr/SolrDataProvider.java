@@ -400,7 +400,7 @@ public class SolrDataProvider implements ISolrDataProvider {
 	 * @return
 	 */
 	IResult convertResultsWithFilter(IResult x, Set<String>credentials) {
-		System.out.println("CONVERTRESULT- "+x.getResultObject());
+//		System.out.println("CONVERTRESULT- "+x.getResultObject());
 		IResult result = new ResultPojo();
 		List<INode> l = new ArrayList<INode>();
 		result.setResultObject(l);

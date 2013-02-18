@@ -243,9 +243,9 @@ public interface IDataProvider {
 	  /**
 	   * 
 	   * @param queryString
-	 * @param start
-	 * @param count
-	 * @param credentials TODO
+	   * @param start
+	   * @param count
+	   * @param credentials
 	   * @return
 	   */
 	  IResult runQuery(String queryString, int start, int count, Set<String> credentials);
