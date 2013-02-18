@@ -1,0 +1,72 @@
+<?xml version="1.0" ?>
+<!-- SolrAgentCoordinator properties
+	These properties configure an "ecosystem" among agents which
+	plug into the SolrAgentFramework
+	20130216 jp2: latest
+	-->
+
+<properties>
+
+	<!-- 
+		AgentBehavior value is a string which determines certain behaviors.
+		There are presently two types of behaviours:
+			"harvest"  where the system stays tightly coupled with Solr update events
+			"model" where the system watches other SolrAgentEnvironment instances
+				for requests for models or results
+		Behaviors are defined in IAgentFrameworkBehavior
+			though it might be possible to make the behavior extensible such
+			that new behaviors can be "plugged in" by way of the agents
+			themselves.
+	 -->
+	<parameter name="AgentBehavior" value="harvest" /> 
+	
+	<!-- 
+		AgentName gives this agent a unique identity when talking to
+		SolrAgentCoordinator(s). The string can be anything, just so long as it is
+		unique in a society of agents all polling the same blackboard.
+	 -->
+	<parameter name="AgentName" value="94026" /> 
+
+	<!-- 
+		This platform includes an instance of SemiSpace blackboard (tuplespace).
+		It needs a unique name for its Tracer log
+	 -->
+	<parameter name="SemiSpaceName" value="SemiSpace94026" /> 
+
+	<!-- if it's localhost, this should work: http://localhost:8983/solr/ "http://10.1.10.80:8993/solr/"-->
+	<parameter name="SolrURL" value="http://localhost:8983/solr/" /> <!-- CHANGE ME -->
+	
+	<!-- number of nodes cached internally  -->
+	<parameter name="MapCacheSize" value="1024" /> 
+
+	<!-- 
+		provide a list of agents, which must be in the classpath, for booting.
+		Each agent implements the org.topicquests.solr.api.IPluggableAgent interface.
+		MockAgent is for testing.
+		used in SolrEnvironment; they are the last to boot since they
+		go right to work
+		Note that the "name" field in each parameter is the name given to this
+		agent for its log tracer; each name must be unique in the group,
+		and unique in terms of SemiSpaceName and AgentName above
+	 -->
+	<list name="Agents">
+		<parameter name="Mock" value="org.topicquests.agent.mock.MockAgent" />
+	</list>	
+	
+	<!-- 
+		port for the TupleSpaceConnector
+		used in AgentEnvironment
+	 -->
+	<parameter name="TuplespacePort" value="2930" /> <!-- CHANGE ME -->
+	<!-- 
+		server for the TupleSpaceConnector
+		NOTE: if this system must listen to multiple instances of
+		SolrAgentCoordinator, then there may be different instances
+		of this parameter with slightly different name and value
+		used in AgentEnvironment
+	 -->
+	<parameter name="TuplespaceServer" value="localhost" /> <!-- CHANGE ME -->
+
+
+</properties>
+
