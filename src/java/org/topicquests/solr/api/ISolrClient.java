@@ -48,6 +48,7 @@ public interface ISolrClient {
 	 * @param fields
 	 * @return can return an error message
 	 * @deprecated use <code>partialUpdateData</code>
+	 * NOTE: there are cases where surgery is pretty major, so we still need this
 	 */
 	 IResult updateData(Map<String,Object>fields);
 	 

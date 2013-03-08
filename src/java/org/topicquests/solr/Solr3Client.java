@@ -30,12 +30,14 @@ import org.topicquests.common.api.IResult;
 import org.topicquests.common.api.ITopicQuestsOntology;
 import org.topicquests.common.ResultPojo;
 import org.topicquests.solr.api.ISolrClient;
+import org.topicquests.util.LoggingPlatform;
 
 /**
  * @author park
  * For non-SolrCloud use
  */
 public class Solr3Client implements ISolrClient {
+	private LoggingPlatform log = LoggingPlatform.getInstance();
 	private HttpSolrServer server;
 	/**
 	 * @param solrURL
@@ -44,7 +46,7 @@ public class Solr3Client implements ISolrClient {
 	public Solr3Client(String solrURL) throws Exception {
 		System.out.println("SERVER "+solrURL);
 		server = new HttpSolrServer(solrURL);
-	//	server.setParser(new XMLResponseParser());
+		server.setParser(new XMLResponseParser());
 	}
 
 	public SolrServer getSolrServer() {
@@ -74,8 +76,7 @@ public class Solr3Client implements ISolrClient {
 			System.out.println("ZZZZ "+x.getResults());
 			result.setResultObject(x.getResults());
 		} catch (Exception e) {
-			//TODO log the error
-			e.printStackTrace();
+			log.logError("SolrClient3.runQuery "+e.getMessage()+" "+queryString, e);
 			result.addErrorString(e.getMessage());
 		}
 		return result;
@@ -86,6 +87,7 @@ public class Solr3Client implements ISolrClient {
 	 * @param fields
 	 * @return
 	 * @deprecated
+	 * NOTE: sometimes surgery overwhelms partial update
 	 */
 	public IResult updateData(Map<String,Object>fields) {
 		return addData(fields);
@@ -126,14 +128,14 @@ public class Solr3Client implements ISolrClient {
 		int status = 0;
 		try {
 			SolrInputDocument document = mapToDocument(fields);
+			System.out.println("Solr3Client.addData-2 "+document);
 			UpdateResponse response = server.add(document);
 			status = response.getStatus();
 			//TODO full commit or soft commit?
 			server.commit();
 		} catch (Exception e) {
 			result.addErrorString(e.getMessage());
-			System.out.println("Solr3Client.addData error "+e.getMessage());
-			e.printStackTrace();
+			log.logError("Solr3Client.addData error-1 "+e.getMessage()+" "+fields,e);
 		}
 		result.setResultObject(new Integer(status));
 		return result;
@@ -162,8 +164,7 @@ public class Solr3Client implements ISolrClient {
 			server.commit();
 		} catch (Exception e) {
 			result.addErrorString(e.getMessage());
-			System.out.println("Solr3Client.addData error "+e.getMessage());
-			e.printStackTrace();
+			log.logError("Solr3Client.addData error-2 "+e.getMessage()+" "+documents,e);
 		}
 		result.setResultObject(new Integer(status));
 
@@ -189,7 +190,14 @@ public class Solr3Client implements ISolrClient {
 			System.out.println("Solr3Client.addData-2 "+key+" | "+o);
 			//here we try to catch the obvious ones
 			//TODO expand the test for Float
-			if (o instanceof String ||
+			if (key.startsWith(ITopicQuestsOntology.LABEL_PROPERTY) || 
+				key.startsWith(ITopicQuestsOntology.DETAILS_PROPERTY)) {
+				if (o instanceof String)
+					document.addField(key, QueryUtil.escapeNodeData((String)o));
+				else
+					document.addField(key, escapeQueryCulprits((List<String>)o));
+					
+			} else if (o instanceof String ||
 				o instanceof Double ||
 				o instanceof Boolean ||
 				o instanceof Map || // required for partial updates only
@@ -235,6 +243,7 @@ public class Solr3Client implements ISolrClient {
 
 	@Override
 	public IResult partialUpdateData(Map<String, Object> fields) {
+		log.logDebug("Solr3Client.partialUpdateData "+fields);
 		return addData(fields);
 	}
 
@@ -242,28 +251,13 @@ public class Solr3Client implements ISolrClient {
 	public void shutDown() {
 		server.shutdown();
 	}
-/*
-	 String escapeQueryCulprits(String s)
-	 {
-	 StringBuilder sb = new StringBuilder();
-	 for (int i = 0; i < s.length(); i++)
-	 {
-	 char c = s.charAt(i);
-	 // These characters are part of the query syntax and must be escaped
-	 if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':'
-	 || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~'
-	 || c == '*' || c == '?' || c == '|' || c == '&' || c == ';'
-	 )
-	 {
-	 sb.append('\\');
-	 }
-	 if(Character.isWhitespace(c))
-	 {
-	 sb.append(" \\ ");
-	 }
-	 sb.append(c);
-	 }
-	 return sb.toString();
-	 }
-*/
+
+	List<String> escapeQueryCulprits(List<String>culprits) {
+		int len = culprits.size();
+		for (int i=0;i<len;i++) {
+			culprits.set(i, QueryUtil.escapeNodeData(culprits.get(i)));
+		}
+		return culprits;
+	}
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, TopicQuests
+ * Copyright 2013, TopicQuests
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,23 @@ package org.topicquests.model.api;
 
 /**
  * @author park
- * A full classpath must be created to lead to these icons
+ * <p>This legend presumes that people are modeled on their <em>roles</em></p>
  */
-public interface ICoreIcons {
+public interface IPersonLegend extends IEventLegend {
 	
 	public static final String
-		CLASS_ICON			= "cogwheel.png",
-		CLASS_ICON_SM		= "cogwheel_sm.png",
-		RELATION_ICON		= "cogwheels.png",
-		RELATION_ICON_SM	= "cogwheels_sm.png",
-		PROPERTY_ICON		= "snowflake.png",
-		PROPERTY_ICON_SM	= "snowflake_sm.png",
-		PERSON_ICON			= "person.png",
-		PERSON_ICON_SM		= "person_sm.png",
-		GROUP_ICON			= "group.png",
-		GROUP_ICON_SM		= "group.png";
+		/** subclasses EventType */
+		PERSON_TYPE		= "PersonType";
 
+//properties
+public static final String
+	FIRST_NAME_PROPERTY			= "firstName", 		//type = string
+	/** Some people have several middle names, some have none */
+	MIDDLE_NAMES_PROPERTY		= "middleNames", 	// type = string
+	FAMILY_NAME_PROPERTY		= "familyName",		// type = string
+	/** e.g. M.D. etc */
+	NAME_APPENDAGES				= "nameAppendages",	//type = string
+	NIC_NAMES					= "nicknames";		// type = string multivalue
+
+	
 }

@@ -18,7 +18,6 @@ package org.topicquests.solr;
 import java.io.Writer;
 import java.util.*;
 import java.net.URLEncoder;
-import org.apache.log4j.Logger;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.topicquests.common.ResultPojo;
@@ -27,8 +26,10 @@ import org.topicquests.common.api.IResult;
 import org.topicquests.common.api.ITopicQuestsOntology;
 import org.topicquests.solr.api.ISolrClient;
 import org.topicquests.solr.api.ISolrDataProvider;
+import org.topicquests.util.LoggingPlatform;
 import org.topicquests.model.api.INodeModel;
 import org.topicquests.model.Node;
+import org.topicquests.model.api.IMergeImplementation;
 import org.topicquests.model.api.INode;
 import org.topicquests.model.api.ITuple;
 import org.topicquests.model.api.ITupleQuery;
@@ -45,9 +46,9 @@ import org.apache.solr.common.util.DateUtil;
  *
  */
 public class SolrDataProvider implements ISolrDataProvider {
-	private Logger log = Logger.getLogger(SolrDataProvider.class);
+	private LoggingPlatform log = LoggingPlatform.getInstance();
 	private ISolrClient client;
-	private INodeModel model;
+	private INodeModel _model;
 	private ITupleQuery tupleQuery;
 	private SolrExporter exporter;
 	/** We only save public nodes in this cache */
@@ -57,15 +58,16 @@ public class SolrDataProvider implements ISolrDataProvider {
 	 * @param cacheSize
 	 * 
 	 */
-	public SolrDataProvider(ISolrClient sc, int cacheSize) {
-		client = sc;
+	public SolrDataProvider(SolrEnvironment e, int cacheSize) throws Exception {
+		client = e.getSolrClient();
+
 		exporter = new SolrExporter(this);
 		nodeCache = new LRUCache(cacheSize);
-		model = new SolrNodeModel(this);
 		tupleQuery = new SolrTupleQuery(this);
 	}
 	
-	private void removeFromCache(String nodeLocator) {
+	@Override
+	public void removeFromCache(String nodeLocator) {
 		nodeCache.remove(nodeLocator);
 	}
 	
@@ -123,6 +125,24 @@ public class SolrDataProvider implements ISolrDataProvider {
 		return result;
 	}
 	
+	@Override
+	public IResult getVirtualNodeIfExists(String locator,
+			Set<String> credentials) {
+		String query = ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE+":"+ITopicQuestsOntology.MERGE_ASSERTION_TYPE+
+				" AND "+ITopicQuestsOntology.TUPLE_OBJECT_PROPERTY+":"+locator;
+		IResult r = client.runQuery(query, 0, -1);
+log.logDebug("SolrDataProvider.getVirtualNodeIfExists "+query+" | "+r.getResultObject());
+		String lox = locator;
+		if (r.getResultObject() != null) {
+			SolrDocumentList ol = (SolrDocumentList)r.getResultObject();
+			if (ol.size() > 0) {
+				Map<String,Object> m = (Map<String,Object>)ol.get(0);
+				lox = (String)m.get(ITopicQuestsOntology.TUPLE_SUBJECT_PROPERTY);
+log.logDebug("SolrDataProvider.getVirtualNodeIfExists-1 "+locator+" "+lox);			}
+		}
+		return getNode(lox,credentials);
+	}
+
 	/**
 	 * Utility method to accept or reject a node based on privacy and credentials
 	 * @param n
@@ -312,7 +332,7 @@ public class SolrDataProvider implements ISolrDataProvider {
 
 	/* (non-Javadoc)
 	 * @see org.topicquests.model.api.IDataProvider#listTuplesByPredTypeAndSubjectId(java.lang.String, java.lang.String)
-	 */
+	 * /
 	public IResult listTuplesByPredTypeAndSubjectId(String predType,
 			String subjectLocator, int start, int count) {
 		IResult result = new ResultPojo();
@@ -341,7 +361,7 @@ public class SolrDataProvider implements ISolrDataProvider {
 
 	/* (non-Javadoc)
 	 * @see org.topicquests.model.api.IDataProvider#updateTuple(org.topicquests.model.api.ITuple)
-	 */
+	 * /
 	public IResult updateTuple(ITuple tuple) {
 		IResult result = new ResultPojo();
 		// TODO Auto-generated method stub
@@ -350,13 +370,13 @@ public class SolrDataProvider implements ISolrDataProvider {
 
 	/* (non-Javadoc)
 	 * @see org.topicquests.model.api.IDataProvider#removeTuple(org.topicquests.model.api.ITuple)
-	 */
+	 * /
 	public IResult removeTuple(ITuple tuple) {
 		IResult result = new ResultPojo();
 		// TODO Auto-generated method stub
 		return result;
 	}
-
+*/
 	public ISolrClient getSolrClient() {
 		return client;
 	}
@@ -384,6 +404,7 @@ public class SolrDataProvider implements ISolrDataProvider {
 			int len = ol.size();
 			for (int i=0;i<len;i++) {
 				dx = (Map<String,Object>)ol.get(i);
+				unescapeQueryCulprits(dx);
 				obj = new Node(dx);
 				//System.out.println("QQQQ "+obj.toXML());
 				l.add(obj);
@@ -391,6 +412,44 @@ public class SolrDataProvider implements ISolrDataProvider {
 		}
 		return result;
 
+	}
+	
+	void unescapeQueryCulprits(Map<String,Object>map) {
+		String key;
+		List<String> vals;
+		Object o;
+		Iterator<String>itr = map.keySet().iterator();
+		while (itr.hasNext()) {
+			key = itr.next();
+			if (key.startsWith(ITopicQuestsOntology.LABEL_PROPERTY) ||
+				key.startsWith(ITopicQuestsOntology.DETAILS_PROPERTY)) {
+				o = map.get(key);
+				if (o != null) {
+					if (o instanceof List) {
+						vals = (List<String>)o;
+						map.put(key, cleanListOfStrings(vals));
+					} else {
+						//REQUIRE that labels and details always be List<String>
+						vals = new ArrayList<String>();
+						vals.add((String)o);
+						map.put(key, cleanListOfStrings(vals));
+					}
+				}
+			}
+		}
+	}
+	
+	List<String> cleanListOfStrings(List<String>vals) {
+		List<String>result = new ArrayList<String>(vals.size());
+		String x;
+		Iterator<String>itr = vals.iterator();
+		while (itr.hasNext()) {
+			x = itr.next();
+			x = QueryUtil.unEscapeQueryCulprits(x);
+			result.add(x);
+		}
+		
+		return result;
 	}
 	/**
 	 * Convert a list of {@link SolrDocument} objects to either {@link INode} or {@link ITuple} object
@@ -430,7 +489,9 @@ public class SolrDataProvider implements ISolrDataProvider {
 	boolean isSafe(Map<String,Object>node, Set<String>credentials) {
 		System.out.println("ISSAFE- "+node.get(ITopicQuestsOntology.LOCATOR_PROPERTY)+" "+node.get(ITopicQuestsOntology.IS_PRIVATE_PROPERTY));
 		Boolean isPrivate = (Boolean)node.get(ITopicQuestsOntology.IS_PRIVATE_PROPERTY);
-		if (isPrivate) {
+		if (isPrivate == null) // rare event; need to understand what's going on
+			log.logError("SolrDataProvider.isSave bad boolean "+node, null);
+		else if (isPrivate) {
 			if (credentials == null)
 				return false;
 			Object o = node.get(ITopicQuestsOntology.RESTRICTION_PROPERTY_TYPE);
@@ -518,7 +579,7 @@ public class SolrDataProvider implements ISolrDataProvider {
 
 	@Override
 	public INodeModel getNodeModel() {
-		return model;
+		return _model;
 	}
 
 
@@ -541,7 +602,7 @@ public class SolrDataProvider implements ISolrDataProvider {
 			out.close();
 		} catch (Exception e) {
 			result.addErrorString(e.getMessage());
-			log.error(e.getMessage(),e);
+			log.logError(e.getMessage(),e);
 		}
 		return result;
 	}
@@ -587,4 +648,10 @@ public class SolrDataProvider implements ISolrDataProvider {
 		// TODO Auto-generated method stub
 		return result;
 	}
+
+	@Override
+	public void setMergeBean(IMergeImplementation merger) {
+		_model = new SolrNodeModel(this,merger);
+	}
+
 }

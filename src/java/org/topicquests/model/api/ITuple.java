@@ -81,25 +81,12 @@ public interface ITuple extends INode {
 	 * @param roleLocator
 	 */
 	void setSubjectRole(String roleLocator);
+	
 	/**
 	 * 
 	 * @return can return <code>null</code>
 	 */
 	String getSubjectRole();
-	/**
-	 * This is the type (class) of the relation
-	 * @param typeLocator
-	 */
-	//TODO do we really need this?
-//	void setRelationType(String typeLocator);
-//	String getRelationType();
-	
-	/**
-	 * <p>Relation is the predicate in a {subject,predicate,object} triple</p>
-	 * @param relationLocator
-	 */
-//	void setRelationLocator(String relationLocator);
-//	String getRelationLocator();
 	
 	/**
 	 * Transclude means this tuple is transcluded from another source
@@ -120,9 +107,28 @@ public interface ITuple extends INode {
 	 * @param scopeLocator
 	 */
 	void addScope(String scopeLocator);
+	
+	void addMergeReason(String reason);
+	
+	List<String> listMergeReasons();
+	
 	/**
 	 * 
 	 * @return does not return <code>null</code>
 	 */
 	List<String> listScopes();
+	
+	/**
+	 * <p>A tuple can be used to represent a scene in which something occurs in a transaction.</p>
+	 * <p>Example: Mary gave a ball to Joe, where the <em>ball</em> is the theme in a <em>give</em>
+	 * transaction between two parties, Mary and Joe</p>
+	 * @param themeLocator
+	 */
+	void setThemeLocator(String themeLocator);
+	
+	/**
+	 * 
+	 * @return can return <code>null</code>
+	 */
+	String getThemeLocator();
 }

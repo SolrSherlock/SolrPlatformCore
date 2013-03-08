@@ -2,10 +2,31 @@
 <!-- SolrAgentCoordinator properties
 	These properties configure an "ecosystem" among agents which
 	plug into the SolrAgentFramework
-	20130216 jp2: latest
+	20130223 jp2: latest
 	-->
 
 <properties>
+
+	<!-- 
+		ShouldBootstrap: 
+			Yes = test for bootstrap the topic map
+			No = do not test for bootstrap
+		Only one config-props.xml file should say "Yes" in
+			an installation; typically on the SolrAgentFramework that includes
+			the MergeAgent. Other installations of SolrAgentFramework
+			in the area or network should say "No".
+			It is unlikely that there will be problems, the probability
+			that two agents, while booting, will decide to begin the
+			bootstrap process at the same time is not nil.
+	 -->
+	<parameter name="ShouldBootstrap" value="No" /> 
+
+	<!-- 
+		The core TopicQuests topic map platform has an internal merge function which
+		is plug-in swappable. "MergeImplementation" is the key to get the
+		classpath (value) for that object
+	 -->
+	<parameter name="MergeImplementation" value="org.topicquests.solr.merge.MergeBean" /> 
 
 	<!-- 
 		AgentBehavior value is a string which determines certain behaviors.
@@ -50,8 +71,20 @@
 		and unique in terms of SemiSpaceName and AgentName above
 	 -->
 	<list name="Agents">
-		<parameter name="Mock" value="org.topicquests.agent.mock.MockAgent" />
+		<parameter name="Merger" value="org.topicquests.solr.agents.merge.SolrMergeAgent" />
 	</list>	
+
+	<!-- 
+		These are individual IPortfolioAgents which are used by the
+		"Merger" merge agent. If a merge agent is not installed in the "Agents" list
+		then these will not be called
+	 -->
+	<list name="PortfolioAgents">org.topicquests.solr.agents.merge.agents
+		<parameter name="LabelAgent" value="org.topicquests.solr.agents.merge.agents.LabelMergeAgent" />
+		<parameter name="DetailsAgent" value="org.topicquests.solr.agents.merge.agents.DetailsMergeAgent" />
+		<parameter name="TuplesAgent" value="org.topicquests.solr.agents.merge.agents.TupleMergeAgent" />
+	</list>	
+	
 	
 	<!-- 
 		port for the TupleSpaceConnector

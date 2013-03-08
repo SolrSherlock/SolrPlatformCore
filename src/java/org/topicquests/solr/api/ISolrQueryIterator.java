@@ -31,13 +31,17 @@ import org.topicquests.model.api.INode;
 public interface ISolrQueryIterator {
 
 	/**
-	 * Will return an initial set of hits
+	 * Will initialize the iterator
 	 * @param queryString
 	 * @param hitCount
 	 * @param credentials
-	 * @return a {@link List} of {@link INode} objects, possibly empty
 	 */
-	IResult start(String queryString, int hitCount, Set<String> credentials);
+	void start(String queryString, int hitCount, Set<String> credentials);
+	
+	/**
+	 * Set the cursor back to 0
+	 */
+	void reset();
 	
 	/**
 	 * Fetch the next number of hits
@@ -50,4 +54,6 @@ public interface ISolrQueryIterator {
 	 * @return a {@link List} of {@link INode} objects, possibly empty
 	 */
 	IResult previous();
+	
+	
 }

@@ -16,13 +16,17 @@
 package org.topicquests.model;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
 import org.apache.solr.schema.DateField;
 import org.topicquests.model.api.ICitation;
+import org.topicquests.model.api.IEventLegend;
 import org.topicquests.model.api.INode;
+import org.topicquests.model.api.IPersonEvent;
+import org.topicquests.model.api.IPersonLegend;
 import org.topicquests.model.api.ITuple;
 import org.topicquests.model.api.IValueMatrix;
 import org.topicquests.model.api.IXMLFields;
@@ -38,7 +42,7 @@ import org.topicquests.common.api.IRelationsLegend;
  */
 public class Node implements 
 		INode, ITuple, ICitation, 
-		IValueMatrix, IConceptualGraph {
+		IValueMatrix, IConceptualGraph, IPersonEvent {
 	private Map<String,Object>properties;
 	
 	/**
@@ -50,19 +54,12 @@ public class Node implements
 
 	/**
 	 * Constructor used when creating from a Solr hit
-	 * @param props
-	 * @param d  can be <code>null</code> when creating a new node
-	 * but must not be <code>null</code> when fetching a node for later
-	 * possible updates
+	 * @param props 
 	 */
 	public Node(Map<String,Object>props) {
-//		db = d;
-//		model = db.getNodeModel();
-		//TODO
-		//IT's not this simple: must pull apart that map to make ours
-		//NOTE: seems to work!
 		properties = props;
 	}
+	
 	
 	/* (non-Javadoc)
 	 * @see org.topicquests.model.api.INode#getLocator()
@@ -79,7 +76,7 @@ public class Node implements
 		return getFirstListValue(field);
 	}
 	
-	String makeField(String fieldBase, String language) {
+	public String makeField(String fieldBase, String language) {
 		String result = fieldBase;
 		if (!language.equals("en"))
 			result += language;
@@ -136,23 +133,20 @@ public class Node implements
 	}
 
 	private void addMultivaluedSetStringProperty(String key, String value) {
-//		System.out.println("AMSSP- "+key+" | "+value);
-//		System.out.println("AMSSP-1 "+properties);
+		
 		Object o = properties.get(key);
 		List<String> ll;
 		if (o == null) {
 			ll = new ArrayList<String>();
-			properties.put(key, ll);
 		} else if ( o instanceof String) {
 			ll = new ArrayList<String>();
 			ll.add((String)o);
-			properties.put(key, ll);
 		} else {
 			ll = (List<String>)o;
 		}
 		if (!ll.contains(value))
 			ll.add(value);
-//		System.out.println("AMSSP-2 "+properties);
+		properties.put(key, ll);
 	}
 
 	/* (non-Javadoc)
@@ -185,11 +179,6 @@ public class Node implements
 		properties.put(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY, date);
 	}
 
-/*	public void setLastEditDate(String date) {
-		//TODO this is an update issue
-		properties.put(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY, date);
-	}
-*/
 	
 	public Date getDate() {
 		return (Date)properties.get(ITopicQuestsOntology.CREATED_DATE_PROPERTY);
@@ -269,7 +258,6 @@ public class Node implements
 				return ((Boolean)x).booleanValue();
 			}
 		}
-			
 		return false;
 	}
 
@@ -296,8 +284,6 @@ public class Node implements
 
 	public List<String> listRestrictionCredentials() {
 		List<String> result = getMultivaluedProperty(ITopicQuestsOntology.RESTRICTION_PROPERTY_TYPE);
-//		if (result == null)
-//			result = new ArrayList<String>();
 		return result;
 	}
 
@@ -310,15 +296,12 @@ public class Node implements
 	List<String> getMultivaluedProperty(String key) {
 		List<String> result = null;
 		Object op = properties.get(key);
-//		System.out.println("GMP-1 "+getLocator()+" "+key+" "+op+" "+(op instanceof ArrayList));
 		if (op != null) {
 			if (op instanceof String) {
 				result = new ArrayList<String>();
 				result.add((String)op);
-//				System.out.println("GMP-2" +result);
 			} else {
 				result = (List<String>)op;
-//				System.out.println("GMP-3" +result);
 			} 
 		} else {
 			result = new ArrayList<String>();
@@ -326,6 +309,7 @@ public class Node implements
 		}
 		return result;
 	}
+	
 	public void addRestrictionCredential(String userId) {
 		List<String> l = getMultivaluedProperty(ITopicQuestsOntology.RESTRICTION_PROPERTY_TYPE);
 		if (!l.contains(userId))
@@ -336,10 +320,6 @@ public class Node implements
 		List<String> l = (List<String>)properties.get(ITopicQuestsOntology.RESTRICTION_PROPERTY_TYPE);
 		if (l != null)
 			l.remove(userId);
-		//TODO technically speaking, if l == null, this is really an error condition
-		//since the caller expects that userId does exist on a list
-//		if (db != null)
-//			model.updateNode(this.getLocator(), ITopicQuestsOntology.RESTRICTION_PROPERTY_TYPE, l);
 	}
 
 	public boolean containsRestrictionCredentials(String userId) {
@@ -353,9 +333,6 @@ public class Node implements
 		// no duplicates allowed
 		if (!ids.contains(psi))
 			ids.add(psi);
-//		if (db != null)
-//			model.updateNode(this.getLocator(), ITopicQuestsOntology.PSI_PROPERTY_TYPE, 
-//				(List<String>)properties.get(ITopicQuestsOntology.PSI_PROPERTY_TYPE));
 	}
 
 	public List<String> listPSIValues() {
@@ -471,8 +448,14 @@ public class Node implements
 	public String toJSON() {
 		JSONObject jo = (JSONObject) JSONSerializer.toJSON( properties ); 
 		//Solr date properties are actually some sort of Date object
-		jo.put(ITopicQuestsOntology.CREATED_DATE_PROPERTY, properties.get(ITopicQuestsOntology.CREATED_DATE_PROPERTY).toString());
-		//TODO if we add edited date property, must fix that too
+		//first, make sure we are dealing with that
+		Object o = properties.get(ITopicQuestsOntology.CREATED_DATE_PROPERTY);
+		if (o != null && o instanceof Date)
+			jo.put(ITopicQuestsOntology.CREATED_DATE_PROPERTY, o.toString());
+		//if we add edited date property, must fix that too
+		o = properties.get(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY);
+		if (o != null && o instanceof Date)
+			jo.put(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY, o.toString());
 		return jo.toString();
 	}
 
@@ -530,8 +513,11 @@ public class Node implements
 			//MUST TEST FOR DATES
 			if (key.equals(ITopicQuestsOntology.CREATED_DATE_PROPERTY) || 
 				key.equals(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY)) {
-				Date d = (Date)(value); //
-				buf.append("    <"+IXMLFields.VALUE+"><![CDATA["+DateField.formatExternal(d)+"]]></"+IXMLFields.VALUE+">\n");
+				if (value instanceof Date) {
+					Date d = (Date)(value); //
+					buf.append("    <"+IXMLFields.VALUE+"><![CDATA["+DateField.formatExternal(d)+"]]></"+IXMLFields.VALUE+">\n");
+				} else
+					buf.append("    <"+IXMLFields.VALUE+"><![CDATA["+value+"]]></"+IXMLFields.VALUE+">\n");
 			} else
 				buf.append("    <"+IXMLFields.VALUE+"><![CDATA["+value+"]]></"+IXMLFields.VALUE+">\n");
 		}
@@ -654,7 +640,7 @@ public class Node implements
 	}
 	@Override
 	public List<String> listLabels(String language) {
-		String field = makeField(ITopicQuestsOntology.DETAILS_PROPERTY,language);
+		String field = makeField(ITopicQuestsOntology.LABEL_PROPERTY,language);
 		return this.getMultivaluedProperty(field);
 	}
 
@@ -753,6 +739,138 @@ public class Node implements
 	@Override
 	public void setParentGraphLocator(String locator) {
 		properties.put(ITopicQuestsOntology.GRAPH_PARENT_GRAPH_PROPERTY_TYPE, locator);
+	}
+
+	@Override
+	public boolean localIsA(String typeLocator) {
+		if (this.getNodeType().equals(typeLocator))
+			return true;
+		List<String>sups = this.listSuperclassIds();
+		if (sups != null && !sups.isEmpty())
+			return sups.contains(typeLocator);
+		return false;
+	}
+
+	@Override
+	public void setFirstName(String firstName) {
+		properties.put(IPersonLegend.FIRST_NAME_PROPERTY, firstName);
+	}
+
+	@Override
+	public String getFirstName() {
+		return (String)properties.get(IPersonLegend.FIRST_NAME_PROPERTY);
+	}
+
+	@Override
+	public void setMiddleNames(String middleNames) {
+		properties.put(IPersonLegend.MIDDLE_NAMES_PROPERTY, middleNames);
+	}
+
+	@Override
+	public String getMiddleNames() {
+		return (String)properties.get(IPersonLegend.MIDDLE_NAMES_PROPERTY);
+	}
+
+	@Override
+	public void setFamilyName(String familyName) {
+		properties.put(IPersonLegend.FAMILY_NAME_PROPERTY, familyName);
+	}
+
+	@Override
+	public String getFamilyName() {
+		return (String)properties.get(IPersonLegend.FAMILY_NAME_PROPERTY);
+	}
+
+	@Override
+	public void setNameAppendages(String appendages) {
+		properties.put(IPersonLegend.NAME_APPENDAGES, appendages);
+	}
+
+	@Override
+	public String getNameAppendages() {
+		return (String)properties.get(IPersonLegend.NAME_APPENDAGES);
+	}
+
+	@Override
+	public void setStartDate(Date startDate) {
+		properties.put(IEventLegend.STARTING_DATE_PROPERTY, startDate);
+	}
+
+	@Override
+	public void setEndDate(Date endDate) {
+		properties.put(IEventLegend.ENDING_DATE_PROPERTY, endDate);
+	}
+
+	@Override
+	public void setLocationOfOrginLocator(String locationLocator) {
+		this.setProperty(IEventLegend.LOCATION_OF_ORIGIN_SYMBOL_PROPERTY, locationLocator);
+	}
+
+	@Override
+	public void setLocationOfOriginName(String locationName) {
+		this.setProperty(IEventLegend.LOCATION_OF_ORIGIN_NAME_PROPERTY, locationName);
+	}
+
+
+	@Override
+	public void addNickName(String nickName) {
+		this.addMultivaluedSetStringProperty(IPersonLegend.NIC_NAMES, nickName);
+	}
+
+	@Override
+	public List<String> listNickNames() {
+		return this.getMultivaluedProperty(IPersonLegend.NIC_NAMES);
+	}
+
+	@Override
+	public void setIsVirtualProxy(boolean t) {
+		String x = (t ? "true":"false");
+		properties.put(ITopicQuestsOntology.IS_VIRTUAL_PROXY, x);
+	}
+
+	@Override
+	public boolean getIsVirtualProxy() {
+		Object x = properties.get(ITopicQuestsOntology.IS_VIRTUAL_PROXY);
+		if (x != null) {
+			if (x instanceof String) {
+				if (x != null) {
+					return Boolean.parseBoolean((String)x);
+				}
+			} else {
+				return ((Boolean)x).booleanValue();
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public void addMergeReason(String reason) {
+		this.addMultivaluedSetStringProperty(ITopicQuestsOntology.MERGE_REASON_RULES_PROPERTY, reason);
+	}
+
+	@Override
+	public List<String> listMergeReasons() {
+		return this.getMultivaluedProperty(ITopicQuestsOntology.MERGE_REASON_RULES_PROPERTY);
+	}
+
+	@Override
+	public void setMergeTupleLocator(String locator) {
+		properties.put(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY, locator);
+	}
+
+	@Override
+	public String getMergeTupleLocator() {
+		return (String)properties.get(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY);
+	}
+
+	@Override
+	public void setThemeLocator(String themeLocator) {
+		properties.put(ITopicQuestsOntology.TUPLE_THEME_PROPERTY, themeLocator);
+	}
+
+	@Override
+	public String getThemeLocator() {
+		return (String)properties.get(ITopicQuestsOntology.TUPLE_THEME_PROPERTY);
 	}
 
 }

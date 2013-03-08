@@ -20,6 +20,7 @@ import java.io.Writer;
 
 import org.topicquests.common.api.IMergeRuleMethod;
 import org.topicquests.common.api.IResult;
+import org.topicquests.solr.QueryUtil;
 
 /**
  * @author park
@@ -30,6 +31,13 @@ public interface IDataProvider {
 	INodeModel getNodeModel();
 	
 	ITupleQuery getTupleQuery();
+	
+	/**
+	 * Remove an {@link INode} from the internal cache
+	 * @param nodeLocator
+	 */
+	void removeFromCache(String nodeLocator);
+	
 	  /**
 	   * Returns a UUID String
 	   * @return
@@ -38,6 +46,7 @@ public interface IDataProvider {
 	  String getUUID_Pre(String prefix);
 	  String getUUID_Post(String suffix);
 	  
+	  void setMergeBean(IMergeImplementation merger);
 	  /**
 	   * Export the entire database to <code>out</code>
 	   * @param out
@@ -101,6 +110,15 @@ public interface IDataProvider {
 
 	  IResult putNode(INode node);
 	  
+	  /**
+	   * <p>If <code>locator</code> is a <em>merged node</em>, then
+	   * return the <em>virtual node</em> which represents it. Otherwise,
+	   * return the node identified by <code>locator</code>
+	   * @param locator
+	   * @param credentials
+	   * @return
+	   */
+	  IResult getVirtualNodeIfExists(String locator, Set<String>credentials);
 	  
 		/**
 		 * Returns a Boolean <code>true if there exists an {@link ITuple} of <code>relationLocator</code> and
@@ -112,12 +130,12 @@ public interface IDataProvider {
 		IResult existsTupleBySubjectOrObjectAndRelation(String theLocator, String relationLocator);
 
 		/**
-	   * <p>Will list only those nodes for which sufficient credentials are presented,
-	   * if a given node is private</p>
-	   * @param nameString
-	   * @param credentials
-	   * @return
-	   */
+		 * <p>Will list only those nodes for which sufficient credentials are presented,
+		 * if a given node is private</p>
+		 * @param nameString
+		 * @param credentials
+		 * @return
+		 */
 //	  IResult listNodesByNameString(String nameString, Set<String> credentials);
 	  
 //	  IResult listNodesByNameStringLike(String nameFragment, int start, int count, Set<String> credentials);
@@ -125,8 +143,8 @@ public interface IDataProvider {
 	  /**
 	   * Tests whether <code>nodeLocator</code> is of type or a subclass of <code>targetTypeLocator</code>
 	   * @param nodeLocator
-	 * @param targetTypeLocator
-	 * @param credentials TODO
+	   * @param targetTypeLocator
+	   * @param credentials
 	   * @return
 	   */
 	  IResult nodeIsA(String nodeLocator, String targetTypeLocator, Set<String> credentials);
@@ -144,9 +162,9 @@ public interface IDataProvider {
 	   * <p>Example: given the string "My favorite topic"; would be matched with My, favorite, or topic</p>
 	   * <p>Results are case sensitive</p>
 	   * @param labelFragment
-	 * @param start
-	 * @param count
-	 * @param credentials TODO
+	   * @param start
+	   * @param count
+	   * @param credentials
 	   * @return
 	   */
 	  IResult listNodesByLabelLike(String labelFragment, int start, int count, Set<String> credentials);
@@ -164,7 +182,7 @@ public interface IDataProvider {
 	   * @param typeLocator
 	   * @param start
 	   * @param count
-	   * @param credentials TODO
+	   * @param credentials
 	   * @return a list of [@link INode} objects or <code>null</code>
 	   */
 	  IResult listInstanceNodes(String typeLocator, int start, int count, Set<String> credentials);
@@ -182,66 +200,54 @@ public interface IDataProvider {
 	   * @param count
 	   * @return -- an IResult object that contains a List[ITuple] or an error message
 	   */
-	  IResult listTuplesByPredTypeAndSubjectId(String predType, String subjectId, int start, int count);
-	  
-
+//	  IResult listTuplesByPredTypeAndSubjectId(String predType, String subjectId, int start, int count);
 	  
 	  
+	  /**
+	   * 
+	   * @param tuple
+	   * @return
+	   */
 	  IResult putTuple(ITuple tuple);
 	  
 	  /**
 	   * Return an <code>ITuple</code> inside an {@link IResult} object or <code>null</code> if not found
 	   * @param tupleLocator
-	 * @param credentials TODO
+	   * @param credentials
 	   * @return -- an IResult object that contains either an ITuple or an error message
 	   */
 	  IResult getTuple(String tupleLocator, Set<String> credentials);
 	  
-	  /**
-	   * <p>Return a list of <code>ITuple</code> objects inside an {@link IResult} object</p>
-	   * <p>This is the core way to fetch an entire {@link INode} by its <code>subjectId</code>
-	   * locator.</p>
-	   * @param subjectLocator
-	 * @param start TODO
-	 * @param count TODO
-	   * @return -- an IResult object that contains List[ITuple] or an error message
-	   */ //moved to ITupleQuery
-//	  IResult listTuplesBySubjectId(String subjectLocator, int start, int count);
+	  
+//	  /**
+//	   * @deprecated
+//	   * @param tuple
+//	   * @return
+//	   */
+//	  IResult updateTuple(ITuple tuple);
+	  
+//	  /**
+//	   * @deprecated
+//	   * @param tuple
+//	   * @return
+//	   */
+//	  IResult removeTuple(ITuple tuple);
 	  
 	  /**
-	   * <p>Return a list of <code>ITuple</code> objects inside an {@link IResult} object</p>
-	   * <p>This is the core way to fetch an list of <code>ITuple</code> object when
-	   * the desired result is to learn all the <code>subjectId</code> values that contain that
-	   * key/value pair.</p>
-	   * @param predType
-	 * @param obj
-	 * @param start TODO
-	 * @param count TODO
-	   * @return -- an IResult object that contains List[ITuple] or an error message
-	   */ //moved to ITupleQuery
-//	  IResult listTuplesByPredTypeAndObject(String predType, String obj, int start, int count);
-	  
-	  /**
-	   * @deprecated
-	   * @param tuple
+	   * Behaves as if to <em>replace</em> <code>node</code>
+	   * @param node
 	   * @return
 	   */
-	  IResult updateTuple(ITuple tuple);
-	  
-	  /**
-	   * @deprecated
-	   * @param tuple
-	   * @return
-	   */
-	  IResult removeTuple(ITuple tuple);
-	  
 	  IResult updateNode(INode node);
 
 	  //////////////////////////////////////////////////
 	  // General query support
 	  //////////////////////////////////////////////////
 	  /**
-	   * 
+	   * <p>Note: <code>queryString</code> is composed of various elements
+	   * which take the form <code>field:stuff</code> where stuff could be
+	   * in the form of text to find, e.g. "over the rainbow".  In the case
+	   * of text to find, that text must be escaped by <code>QueryUtil.escapeQueryCulprits(...)</code></p>
 	   * @param queryString
 	   * @param start
 	   * @param count

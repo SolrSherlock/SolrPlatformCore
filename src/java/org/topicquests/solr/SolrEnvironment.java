@@ -17,8 +17,14 @@ package org.topicquests.solr;
 import java.util.*;
 
 import org.nex.config.ConfigPullParser;
+import org.topicquests.common.api.IConsoleDisplay;
+import org.topicquests.model.BiblioBootstrap;
+import org.topicquests.model.CoreBootstrap;
+import org.topicquests.model.RelationsBootstrap;
+import org.topicquests.model.api.IMergeImplementation;
 import org.topicquests.solr.api.ISolrClient;
 import org.topicquests.solr.api.ISolrDataProvider;
+import org.topicquests.solr.api.ISolrModel;
 import org.topicquests.solr.api.ISolrQueryIterator;
 import org.topicquests.util.LoggingPlatform;
 import org.topicquests.util.Tracer;
@@ -33,6 +39,8 @@ public class SolrEnvironment {
 	private Hashtable<String,Object>props;
 	private ISolrClient solr;
 	private ISolrDataProvider database;
+	private ISolrModel model;
+	private IConsoleDisplay host;
 
 	/**
 	 * @param p
@@ -53,12 +61,37 @@ public class SolrEnvironment {
 			record("Solr4Client started");
 			System.out.println("AAAA "+getStringProperty("MapCacheSize"));
 			int cachesize = Integer.parseInt(getStringProperty("MapCacheSize"));
-			database = new SolrDataProvider(solr,cachesize );
+			database = new SolrDataProvider(this,cachesize );
+			IMergeImplementation merger;
+			String cp = (String)props.get("MergeImplementation");
+			Class o = Class.forName(cp);
+			merger = (IMergeImplementation)o.newInstance();
+			merger.init(this);
+			database.setMergeBean(merger);
+			model = new SolrModel(this);
+			String bs = (String)props.get("ShouldBootstrap");
+			boolean shouldBootstrap = false; // default value
+			if (bs != null)
+				shouldBootstrap = bs.equalsIgnoreCase("Yes");
+			if (shouldBootstrap)
+				bootstrap();
 		} catch (Exception e) {
 			logError(e.getMessage(),e);
 			e.printStackTrace();
 		}
 		logDebug("Started");
+	}
+	void bootstrap() {
+		CoreBootstrap cbs = new CoreBootstrap(database);
+		cbs.bootstrap();
+		BiblioBootstrap bbs = new BiblioBootstrap(database);
+		bbs.bootstrap();
+		RelationsBootstrap rbs = new RelationsBootstrap(database);
+		rbs.bootstrap();
+	}
+	
+	public ISolrModel getSolrModel() {
+		return model;
 	}
 	
 	public ISolrClient getSolrClient() {
@@ -76,6 +109,17 @@ public class SolrEnvironment {
 		return (String)props.get(key);
 	}
 		
+	public void setConsoleDisplay(IConsoleDisplay d) {
+		host = d;
+	}
+	/**
+	 * Can return <code>null</code>
+	 * @return
+	 */
+	public IConsoleDisplay getConsoleDisplay() {
+		return host;
+	}
+
 	/**
 	 * Return a new {@link ISolrQueryIterator}
 	 * @return

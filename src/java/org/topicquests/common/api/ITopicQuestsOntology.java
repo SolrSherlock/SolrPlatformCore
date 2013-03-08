@@ -106,12 +106,16 @@ public interface ITopicQuestsOntology {
 	    LEGEND_TYPE 								= "LegendType",
 	    SCOPE_TYPE 									= "ScopeType",
 	    	MERGE_RULE_SCOPE_TYPE					= "MergeRuleScopeType",
-	    
+	    	THEME_TYPE								= "ThemeType",
+
 	    ///////////////////////
 	    // Assertions
 	    ///////////////////////
 	    ASSERTION_TYPE 								= "AssertionType",
 			MERGE_ASSERTION_TYPE 					= "MergeAssertionType",
+			POSSIBLE_MERGE_ASSERTIONTYPE			= "PossibleMergeAssertionType",
+			UNMERGE_ASSERTION_TYPE					= "UnMergeAssertionType",
+			
 			ROLE_BASED_RELATION_TYPE 				= "RoleBasedRelationType",
 			LINGUISTIC_RELATION_TYPE 				= "linguisticRelationType",
 			SIMPLE_ASSERTION_TYPE 					= "SimpleAssertionType",
@@ -156,6 +160,8 @@ public interface ITopicQuestsOntology {
 			 */
 			MERGE_REASON_RULES_PROPERTY					= "mergeReasonRules",
 			
+			/** each node can have one and only one merge tuple */
+			MERGE_TUPLE_PROPERTY						= "mergetuple",
 			MERGE_LIST_PROPERTY							= "mergeList",
 			/** some nodes which represent web pages might be href'd by other pages */
 			BACKLINK_LIST_PROPERTY						= "backlinks",
@@ -174,31 +180,10 @@ public interface ITopicQuestsOntology {
 		    GRAPH_RELATION_LIST_PROPERTY_TYPE			= "graphrelnlist",
 		    GRAPH_PARENT_GRAPH_PROPERTY_TYPE			= "graphparent",
 		
-		    /**
-		     * Lists description AIRProxy {@link SubjectProxy} objects
-		     */
-		//    DESCRIPTION_LIST_PROPERTY_TYPE 				= "DescriptionListPropertyType",
-		    /**
-		     * <p>
-		     * A <code>Property</code> that contains a collection of <code>SubjectProxy</code> objects
-		     * each of which holds a collection (set -- no duplicates) of
-		     * <code>Property</code> instances, each of which is a <code>Subject Identity Property</code>
-		     * </p>
-		     * <p>
-		     * A <code>Proxy</code> can have as many SIP_Set nodes as needed to establish
-		     * subject identity under different contexts.
-		     * </p>
-		     */
-		 //   SIP_SET_PROPERTY_TYPE 						= "SIPSetPropertyType",
-		
-		    /**
-		     * Values "1" is Set, "0" is Bag
-		     */
-		  //  PROPERTY_IS_SET_PROPERTY_TYPE 				= "SetTypePropertyType",
-		    
+		    /** list of symbols of Scope topics */
 		    SCOPE_LIST_PROPERTY_TYPE 					= "scopes",
+		    
 		    PSI_PROPERTY_TYPE 							= "psi",
-		  //  SUBJECT_NAME_PROPERTY 						= "SubjectNamePropertyType",
 
 		    /**
 		     * Label is e.g. the IBIS statement in a node
@@ -208,23 +193,17 @@ public interface ITopicQuestsOntology {
 			 * Very short label: 70 characters, like DebateGraph
 			 */
 			SMALL_LABEL_PROPERTY						= "smallLabel",
-//			LANGUAGES_PROPERTY							= "LanguagePropertyType",
 			
-			CREATOR_ID_PROPERTY							= "creatorId",
 			/**
 			 * Details are like a description except just one per node
 			 */
 			DETAILS_PROPERTY							= "details",
+			
 			/**
 			 * The official, unique identifier for any proxy (node)
 			 */
 			LOCATOR_PROPERTY							= "locator",
-		
-	//		ASSERTION_SOURCE_PLAYER_PROPERTY 			= "AssertionSourcePlayerProperty",
-	//		ASSERTION_SOURCE_ROLE_PROPERTY 	 			= "AssertionSourceRoleProperty",
-	//		ASSERTION_TARGET_PLAYER_PROPERTY 			= "AssertionTargetPlayerProperty",
-	//		ASSERTION_TARGET_ROLE_PROPERTY   			= "AssertionTargetRoleProperty",
-		  
+				  
 			RESOURCE_URL_PROPERTY			 			= "resourceURL",
 			
 			////////////////////////////
@@ -241,11 +220,18 @@ public interface ITopicQuestsOntology {
 			TUPLE_IS_TRANSCLUDE_PROPERTY				= "isTransclude",
 			TUPLE_SUBJECT_ROLE_PROPERTY					= "tupleSubjectRole",
 			TUPLE_OBJECT_ROLE_PROPERTY					= "tupleObjectRole",
+			TUPLE_THEME_PROPERTY						= "tupleTheme",
 			
 			LARGE_IMAGE_PATH							= "largeIcon",
 			SMALL_IMAGE_PATH							= "smallIcon",
+			
+			CREATOR_ID_PROPERTY							= "creatorId",
+			
+			//Date
 			CREATED_DATE_PROPERTY						= "createdDate",
 			LAST_EDIT_DATE_PROPERTY						= "lastEditDate",
-			IS_PRIVATE_PROPERTY							= "isPrivate";
+			//boolean
+			IS_PRIVATE_PROPERTY							= "isPrivate",
+			IS_VIRTUAL_PROXY							= "isVirtProxy";
 	  
 }

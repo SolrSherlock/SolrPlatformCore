@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Date;
 
 import org.topicquests.common.api.IResult;
+
 /**
  * @author park
  *
@@ -33,6 +34,22 @@ public interface INode {
 	IResult doUpdate();
 	
 	/**
+	 * Calculate a property key (field) from language for
+	 * either labels or details
+	 * @param fieldBase
+	 * @param language
+	 * @return
+	 */
+	String makeField(String fieldBase, String language);
+	
+	/**
+	 * Perform a simple test on nodeType and superClasses
+	 * @param typeLocator
+	 * @return
+	 */
+	boolean localIsA(String typeLocator);
+	
+	/**
 	 * Locator is the identifier for this tuple
 	 * @param tupleLocator
 	 */
@@ -41,6 +58,19 @@ public interface INode {
 
 	void setCreatorId(String id);
 	String getCreatorId();
+	
+	/**
+	 * A node can have one and only one merge tuple if it has been
+	 * merged.
+	 * @param locator
+	 */
+	void setMergeTupleLocator(String locator);
+	
+	/**
+	 * Can return <code>null</code>
+	 * @return
+	 */
+	String getMergeTupleLocator();
 	
 	/**
 	 * Return <code>true</code> if this {@link INode} is a {@link ITuple}
@@ -59,11 +89,14 @@ public interface INode {
 	 *  YYYY-MM-DDThh:mm:ssZ
 	 * @param date
 	 */
-	//void setDate(String date);
 	void setDate(Date date);
 	Date getDate();
 	
-	//void setLastEditDate(String date);
+	/**
+	 * <p>Used while building, not while modifying after stored.</p>
+	 * <p>To use after node is stored, must pay attention to update methods</p>
+	 * @param date
+	 */
 	void setLastEditDate(Date date);
 	Date getLastEditDate();
 	
@@ -86,18 +119,20 @@ public interface INode {
 	String toXML();
 	
 	
-//	  String getLanguage();
-	  
 	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * Labels can come in many languages, or also be synonyms, acronyms, etc
 	   * @param label
-	 * @param language
-	 * @param userId can be <code>null</code> if not an update
-	 * @param isLanguageAddition almost always false
+	   * @param language
+	   * @param userId can be <code>null</code> if not an update
+	   * @param isLanguageAddition almost always false
 	   */
 	  void addLabel(String label, String language, String userId, boolean isLanguageAddition);
 	  
 	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * Small label is limited to 70 characters, as found in http://debategraph.org/
 	   * @param label
 	   * @param language
@@ -178,13 +213,17 @@ public interface INode {
 	  List<String> listDetails(String language);
 	  	  
 	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * Images are really icons, not pictures
 	   * @param img can be <code>null</code>
 	   * <em>should not be an empty string</em>
 	   */
 	  void setSmallImage(String img);
+	  
 	  /**
-	   * 
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * @param img can be <code>null</code>
 	   * <em>should not be an empty string</em>
 	   */
@@ -202,6 +241,11 @@ public interface INode {
 	   */
 	  String getImage();
 
+	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
+	   * @param typeLocator
+	   */
 	  void setNodeType(String typeLocator);
 	  
 	  /**
@@ -210,11 +254,27 @@ public interface INode {
 	   */
 	  String getNodeType();
 
+	  /**
+	   * A <em>VirtualProxy</em> is an {@link INode} which serves as a <em>hub</em>
+	   * in a collection of nodes which have been merged.
+	   * @param t
+	   */
+	  void setIsVirtualProxy(boolean t);
+	  
+	  boolean getIsVirtualProxy();
+	  
+	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
+	   * @param superclassLocator
+	   */
 	  void addSuperclassId(String superclassLocator);
 	  
 	  /**
 	   * <p>A generic method<p>
 	   * <em>Risks overwriting a property</em>
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * @param key
 	   * @param value one of <code>String</code> or <code>List<String></code>
 	   */
@@ -224,13 +284,15 @@ public interface INode {
 	   * <p>Utility method. The first time a <code>value</code> is
 	   * added to this <key>, it goes in as a String. The next time,
 	   * the property will be converted to a <code>List</code></p>
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * @param key
 	   * @param value
 	   */
 	  void addPropertyValue(String key, String value);
 	  
 	  /**
-	   * Returns one of <code>String</code> or <code>List<String></code
+	   * Returns one of <code>String</code> or <code>List<String></code>
 	   * @param key
 	   * @return can return <code>null</code>
 	   */
@@ -242,16 +304,21 @@ public interface INode {
 	   */
 	  List<String> listSuperclassIds();
 	  
-//	  void setLanguage(String lang);
-	  
-	  
+	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
+	   * @param isPrivate
+	   */
 	  void setIsPrivate(boolean isPrivate);
 	  
 	  /**
 	   * Utility
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * @param t
 	   */
 	  void setIsPrivate(String t);
+	  
 	  /**
 	   * Defaults to <code>false</code>
 	   * @return
@@ -263,14 +330,40 @@ public interface INode {
 	   * @return does not return <code>null</code>
 	   */
 	  List<String> listRestrictionCredentials();
+	  
+	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
+	   * @param userId
+	   */
 	  void addRestrictionCredential(String userId);
+	  
+	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
+	   * @param userId
+	   */
 	  void removeRestrictionCredential(String userId);
+	  
+	  /**
+	   * 
+	   * @param userId
+	   * @return
+	   */
 	  boolean containsRestrictionCredentials(String userId);
 	  
+	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
+	   * @param url
+	   */
 	  void setURL(String url);
+	  
 	  String getURL();
 	  
 	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * <p>A node can be <em>tagged</em> with Published Subject Indicator values.</p>
 	   * <p>If one remains faithful to the topic mapping standards, a node (topic) can
 	   * have just <em>one</em> PSI; in work outside topic mapping, it is possible for
@@ -286,12 +379,16 @@ public interface INode {
 	  List<String> listPSIValues();
 	  
 	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * Add an unrestricted {@link ITuple} to this node
 	   * @param tupleLocator
 	   */
 	  void addTuple(String tupleLocator);
 	  
 	  /**
+	   * <p>Used while building, not while modifying after stored.</p>
+	   * <p>To use after node is stored, must pay attention to update methods</p>
 	   * Add a restricted (not public) {@link ITuple} to this node
 	   * @param tupleLocator
 	   */

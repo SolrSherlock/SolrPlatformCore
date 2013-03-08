@@ -16,6 +16,7 @@
 package org.topicquests.model.api;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.topicquests.common.api.IResult;
 
@@ -30,14 +31,9 @@ public interface INodeModel {
 	  
 	  IResult newSubclassNode(String locator,String superclassLocator,String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
 	  IResult newSubclassNode(String superclassLocator,String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
-//	  IResult newNamedSubclassNode(String superclassLocator, String name, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
-//	  IResult newNamedSubclassNode(String locator, String superclassLocator, String name, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
 	  
 	  IResult newInstanceNode(String locator,String typeLocator,String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
 	  IResult newInstanceNode(String typeLocator,String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
-
-//	  IResult newNamedInstanceNode(String typeLocator, String name, String lang, String userId, boolean isPrivate);
-//	  IResult newNamedInstanceNode(String locator, String typeLocator, String name, String lang, String userId, boolean isPrivate);
 
 	  
 	  /**
@@ -48,14 +44,53 @@ public interface INodeModel {
 	   * @param updatedLabel  <code>null</code> if no change
 	   * @param updatedDetails <code>null</code> if no change
 	   * @param language
+	   * @param oldLabel if <code>null</code> or "", this is a new label
+	   * @param oldDetails if <code>null</code> or "", this is a new details
 	   * @param userId
 	   * @param isLanguageAddition <code>true</code> if is new translation
+	   * @param credentials
 	   * @return
 	   */
-	  IResult updateNode(String nodeLocator, String updatedLabel, String updatedDetails, String language, String userId, boolean isLanguageAddition);
+	  IResult updateNode(String nodeLocator, String updatedLabel, String updatedDetails, String language, 
+			  String oldLabel, String oldDetails, String userId, boolean isLanguageAddition, Set<String> credentials);
 	  
-	  IResult updateNode(String nodeLocator, String propertyKey, List<String> propertyValues);
-	  IResult updateNode(String nodeLocator, String propertyKey, String propertyValue);
+	  /**
+	   * <p>Used for updating a node where a List property needs surgery other than a simple
+	   * addition, such as swapping a value. All changes must be made in <code>propertyValue</code></p>
+	   * <p>This works by fetching the old node, changing the value, removing version, deleting the old node,
+	   * and adding the modified node back</p>
+	   * @param nodeLocator
+	   * @param propertyKey
+	   * @param propertyValues
+	   * @param credentials
+	   * @return
+	   */
+//	  IResult updateNode(String nodeLocator, String propertyKey, List<String> propertyValues, Set<String> credentials);
+	 
+	  
+	  /**
+	   * <p>Perform a single, surgical change to a particular <code>key</code> (field)</p>
+	   * <p>NOTE: appropriate to Solr 4+ and requires that {@link ISolrClient} uses
+	   * the {@link XMLResponseParser}</p>
+	   * @param node
+	   * @param key
+	   * @param newValue
+	   * @return
+	   */
+	  IResult changePropertyValue(INode node, String key, String newValue);  
+	  
+	  /**
+	   * <p>Perform surgery to a multi-valued <code>key</code> (field) by adding
+	   * <code>newValue</code> to it</p>
+	   * <p>NOTE: appropriate to Solr 4+ and requires that {@link ISolrClient} uses
+	   * the {@link XMLResponseParser}</p>
+	   * @param node
+	   * @param key
+	   * @param newValue
+	   * @return
+	   */
+	  IResult addPropertyValueInList(INode node, String key, String newValue);
+	  
 	  /**
 	   * <p>Form an {@link ITuple} between <code>sourceNodeLocator</code> and <code>targetNodeLocator</code></p>
 	   * <p>The meaning of <code>isTransclude</code> is that <code>targetNodeLocator</code> is a
@@ -65,33 +100,98 @@ public interface INodeModel {
 	   * @param targetNodeLocator
 	   * @param relationTypeLocator
 	   * @param userId
-	   * @param smallImagePath TODO
-	   * @param largeImagePath TODO
+	   * @param smallImagePath
+	   * @param largeImagePath
 	   * @param isTransclude
-	   * @param isPrivate TODO
+	   * @param isPrivate
 	   * @return
 	   */
 	  IResult relateNodes(String sourceNodeLocator, String targetNodeLocator, String relationTypeLocator, String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate);
 	  
 	  /**
-	   * Assert a merge, which fires up a VirtualProxy, creates a MergeAssertion node (not a triple)
-	   * and adds the list of rule locators to the merge assertion proxy
-	   * @param sourceNodeLocator
-	 * @param mergedNodeLocator
-	 * @param mergeRuleLocators
-	 * @param mergeConfidence TODO
-	 * @param userLocator
+	   * <p>Form an {@link ITuple} between <code>sourceNode</code> and <code>targetNode</code></p>
+	   * <p>This method is appropriate <em>only</em> to nodes which are in the database</p>
+	   * @param sourceNode
+	   * @param targetNode
+	   * @param relationTypeLocator
+	   * @param userId
+	   * @param smallImagePath
+	   * @param largeImagePath
+	   * @param isTransclude
+	   * @param isPrivate
+	   * @return the locator of the created {@link ITuple}
+	   */
+	  IResult relateExistingNodes(INode sourceNode, INode targetNode, String relationTypeLocator, String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate);
+	  
+	  /**
+	   * <p>Form an {@link ITuple} between <code>sourceNodeLocator</code> and <code>targetNodeLocator</code></p>
+	   * <p>This method takes to <em>unsaved</em> nodes, relates them, and saves them after the relation is formed</p>
+	   * @param sourceNode
+	   * @param targetNode
+	   * @param relationTypeLocator
+	   * @param userId
+	   * @param smallImagePath
+	   * @param largeImagePath
+	   * @param isTransclude
+	   * @param isPrivate
 	   * @return
 	   */
-	  IResult assertMerge(String sourceNodeLocator, String mergedNodeLocator, List<String>mergeRuleLocators, double mergeConfidence, String userLocator);
+	  IResult relateNewNodes(INode sourceNode, INode targetNode, String relationTypeLocator, String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate);
+	 
+	  /**
+	   * <p>Assert a merge, which fires up a VirtualProxy, creates a MergeAssertion node (not a triple)
+	   * and adds the list of rule locators to the merge assertion proxy</p>
+	   * <p>The merge must be mindful of a nodes place in some graph. If the node has
+	   * a parent node of some time, then the VirtualProxy must substitute for that,
+	   * and both nodes must be removed as child nodes; the VirtualProxy always stands
+	   * for those nodes in that graph.</p>
+	   * @param sourceNode
+	   * @param targetNodeLocator
+	   * @param mergeData
+	   * @param mergeConfidence
+	   * @param userLocator
+	   * @return the locator of the created {@link ITuple}
+	   */
+	  IResult assertMerge(INode sourceNode, String targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
 	  
-//	  IResult getNodeByLocator(String locator);
-	  
-//	  IResult getNodeByPSI(String psi);
+	  /**
+	   * Assert that the two nodes <em>might need to be merged</em> based on the
+	   * collection of reasons and votes.
+	   * @param sourceNodeLocator
+	   * @param targetNodeLocator
+	   * @param mergeData
+	   * @param mergeConfidence
+	   * @param userLocator
+	   * @return
+	   * NOTE: not yet implemented
+	   */
+	  IResult assertPossibleMerge(String sourceNodeLocator, String targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
 
+	  /**
+	   * Assert that these two nodes must not be merged; they were before, but for reasons given,
+	   * they should not be merged now.
+	   * @param sourceNodeLocator
+	   * @param targetNodeLocator
+	   * @param mergeData
+	   * @param mergeConfidence
+	   * @param userLocator
+	   * @return
+	   *Note: not implemented yet
+	   */
+	  IResult assertUnmerge(String sourceNodeLocator, INode targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
 	  
+	  /**
+	   * 
+	   * @param locator
+	   * @return
+	   */
 	  IResult removeNode(String locator);
 	  
+	  /**
+	   * Return a weak credentials based on <code>userId</code>
+	   * @param userId
+	   * @return
+	   */
 	  Set<String> getDefaultCredentials(String userId);
 	  
 	  /**
@@ -101,5 +201,4 @@ public interface INodeModel {
 	   */
 	  String dateToSolrDate(Date d);
 
-	  IResult newTuple(String relationType, String subjectId, String objectType, String objectVal, String relationId, String userId, boolean isTransclude);
 }

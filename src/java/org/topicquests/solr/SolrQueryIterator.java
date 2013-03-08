@@ -45,12 +45,11 @@ public class SolrQueryIterator implements ISolrQueryIterator {
 	 * @see org.topicquests.solr.api.ISolrQueryIterator#start(java.lang.String, int)
 	 */
 	@Override
-	public IResult start(String queryString, int hitCount, Set<String> credentials) {
+	public void start(String queryString, int hitCount, Set<String> credentials) {
 		_query = queryString;
 		_count = hitCount;
 		_cursor = 0;
 		_credentials = credentials;		
-		return runQuery();
 	}
 
 	/* (non-Javadoc)
@@ -58,8 +57,9 @@ public class SolrQueryIterator implements ISolrQueryIterator {
 	 */
 	@Override
 	public IResult next() {
+		IResult result = runQuery();
 		_cursor += _count;
-		return runQuery();
+		return result;
 	}
 
 	/* (non-Javadoc)
@@ -67,14 +67,20 @@ public class SolrQueryIterator implements ISolrQueryIterator {
 	 */
 	@Override
 	public IResult previous() {
+		IResult result = runQuery();
 		_cursor -= _count;
 		if (_cursor < 0)
 			_cursor = 0;
-		return runQuery();
+		return result;
 	}
 	
 	private IResult runQuery() {
 		return solr.runQuery(_query, _cursor, _count, _credentials);
+	}
+
+	@Override
+	public void reset() {
+		_cursor = 0;
 	}
 
 }

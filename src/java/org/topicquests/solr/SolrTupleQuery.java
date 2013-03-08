@@ -144,6 +144,25 @@ public class SolrTupleQuery implements ITupleQuery {
 		IResult result = database.runQuery(queryString, 0, 50, credentials);
 		return result;
 	}
+	
+	@Override
+	public IResult listTuplesBySubjectAndPredType(String subjectLocator,
+			String predType, int start, int count, Set<String> credentials) {
+		String queryString = ITopicQuestsOntology.TUPLE_SUBJECT_PROPERTY+":"+subjectLocator+
+				" AND "+ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE+":"+predType;
+		//NOTE: we need to run this as an iterator
+		IResult result = database.runQuery(queryString, 0, 50, credentials);
+		return result;
+	}
+
+	@Override
+	public IResult listTuplesByObjectLocator(String objectLocator,
+			Set<String> credentials) {
+		String queryString = ITopicQuestsOntology.TUPLE_OBJECT_PROPERTY+":"+objectLocator;
+		//NOTE: we need to run this as an iterator
+		IResult result = database.runQuery(queryString, 0, 50, credentials);
+		return result;
+	}
 
 	@Override
 	public IResult listTuplesByPredTypeAndObject(String predType, String obj,
@@ -154,6 +173,8 @@ public class SolrTupleQuery implements ITupleQuery {
 		IResult result = database.runQuery(queryString, 0, 50, credentials);
 		return result;
 	}
+
+
 
 
 }

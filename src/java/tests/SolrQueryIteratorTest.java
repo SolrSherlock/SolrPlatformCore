@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, TopicQuests
+ * Copyright 2013, TopicQuests
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,8 @@ public class SolrQueryIteratorTest {
 		Set<String>credentials = new HashSet<String>();
 		credentials.add("admin");
 		
-		IResult result = itr.start(query, count, credentials);
-		System.out.println("GOT "+result.hasError()+" "+result.getResultObject());
-		result = itr.next();
+		itr.start(query, count, credentials);
+		IResult result = itr.next();
 		System.out.println("GOT-1 "+result.hasError()+" "+result.getResultObject());
 		result = itr.next();
 		System.out.println("GOT-2 "+result.hasError()+" "+result.getResultObject());

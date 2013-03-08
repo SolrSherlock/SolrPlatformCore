@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, TopicQuests
+ * Copyright 2013, TopicQuests
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,24 @@
  * and limitations under the License.
  */
 package org.topicquests.model.api;
-
+import org.topicquests.common.api.ITopicQuestsOntology;
 /**
  * @author park
- * A full classpath must be created to lead to these icons
+ * @see ITopicQuestsOntology
+ * Events use {@link ITopicQuestsOntology$LABEL_PROPERTY} for names
  */
-public interface ICoreIcons {
-	
+public interface IEventLegend {
+	//classes
+	//
 	public static final String
-		CLASS_ICON			= "cogwheel.png",
-		CLASS_ICON_SM		= "cogwheel_sm.png",
-		RELATION_ICON		= "cogwheels.png",
-		RELATION_ICON_SM	= "cogwheels_sm.png",
-		PROPERTY_ICON		= "snowflake.png",
-		PROPERTY_ICON_SM	= "snowflake_sm.png",
-		PERSON_ICON			= "person.png",
-		PERSON_ICON_SM		= "person_sm.png",
-		GROUP_ICON			= "group.png",
-		GROUP_ICON_SM		= "group.png";
-
+		/** root type -- will be subclassed */
+		EVENT_TYPE		= "EventType";
+	
+	//properties
+	public static final String
+		LOCATION_OF_ORIGIN_SYMBOL_PROPERTY	= "originLocator", 	//type = symbol
+		LOCATION_OF_ORIGIN_NAME_PROPERTY	= "originLabel", 	//type = string
+		STARTING_DATE_PROPERTY				= "startingDate", 	// type = Date
+		ENDING_DATE_PROPERTY				= "endingDate";		// type = Date
+		
 }
