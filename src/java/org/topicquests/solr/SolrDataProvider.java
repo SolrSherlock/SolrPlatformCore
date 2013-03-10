@@ -64,6 +64,8 @@ public class SolrDataProvider implements ISolrDataProvider {
 		exporter = new SolrExporter(this);
 		nodeCache = new LRUCache(cacheSize);
 		tupleQuery = new SolrTupleQuery(this);
+		//default NO MERGE model
+		_model = new SolrNodeModel(this,null);
 	}
 	
 	@Override

@@ -64,10 +64,13 @@ public class SolrEnvironment {
 			database = new SolrDataProvider(this,cachesize );
 			IMergeImplementation merger;
 			String cp = (String)props.get("MergeImplementation");
-			Class o = Class.forName(cp);
-			merger = (IMergeImplementation)o.newInstance();
-			merger.init(this);
-			database.setMergeBean(merger);
+			//this installation might not deal with merge bean
+			if (cp != null) {
+				Class o = Class.forName(cp);
+				merger = (IMergeImplementation)o.newInstance();
+				merger.init(this);
+				database.setMergeBean(merger);
+			}
 			model = new SolrModel(this);
 			String bs = (String)props.get("ShouldBootstrap");
 			boolean shouldBootstrap = false; // default value

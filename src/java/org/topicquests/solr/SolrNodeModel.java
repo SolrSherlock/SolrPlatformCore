@@ -47,7 +47,9 @@ public class SolrNodeModel implements INodeModel {
 	public SolrNodeModel(ISolrDataProvider p, IMergeImplementation m) {
 		database = p;
 		merger = m;
-		merger.setNodeModel(this);
+		//not all instances will include merge capabilities
+		if (merger != null)
+			merger.setNodeModel(this);
 		dateField = new DateField();
 	}
 
@@ -325,7 +327,12 @@ public class SolrNodeModel implements INodeModel {
 	public IResult assertMerge(INode sourceNode,
 			String targetNodeLocator, Map<String, Double> mergeData,
 			double mergeConfidence, String userLocator) {
-		return merger.assertMerge(sourceNode, targetNodeLocator, mergeData, mergeConfidence, userLocator);
+		if (merger != null)
+			return merger.assertMerge(sourceNode, targetNodeLocator, mergeData, mergeConfidence, userLocator);
+		IResult result = new ResultPojo();
+		result.addErrorString("SolrNodeModel.assertMerge called: No Merger Installed");
+		log.logError("SolrNodeModel.assertMerge called: No Merger Installed", null);
+		return result;
 	}
 
 	@Override
