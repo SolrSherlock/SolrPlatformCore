@@ -45,13 +45,13 @@ public interface IMergeImplementation {
 	   * a parent node of some time, then the VirtualProxy must substitute for that,
 	   * and both nodes must be removed as child nodes; the VirtualProxy always stands
 	   * for those nodes in that graph.</p>
-	   * @param sourceNode
+	   * @param sourceNodeLocator
 	   * @param targetNodeLocator
 	   * @param mergeData
 	   * @param mergeConfidence
 	   * @param userLocator
 	   * @return
 	   */
-	  IResult assertMerge(INode sourceNode, String targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
+	  IResult assertMerge(String sourceNodeLocator, String targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
 	
 }

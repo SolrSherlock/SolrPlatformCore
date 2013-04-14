@@ -180,6 +180,10 @@ log.logDebug("SolrDataProvider.getVirtualNodeIfExists-1 "+locator+" "+lox);			}
 		return client.addData(node.getProperties());
 	}
 
+	@Override
+	public IResult putNodeNoMerge(INode node) {
+		return client.addDataNoMerge(node.getProperties());
+	}
 
 	/**
 	 * Utility method to hande a list of nodes
@@ -230,8 +234,9 @@ log.logDebug("SolrDataProvider.getVirtualNodeIfExists-1 "+locator+" "+lox);			}
 	 */
 	public IResult listNodesByLabelAndType(String label, String typeLocator,
 			int start, int count, Set<String> credentials) {
-		IResult result = new ResultPojo();
-		// TODO Auto-generated method stub
+		String query = ITopicQuestsOntology.LABEL_PROPERTY+":"+label+" AND "+ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE+":"+typeLocator;
+		IResult result = runQuery(query, start, count, credentials);
+		listNodes(result,credentials);
 		return result;
 	}
 
@@ -290,6 +295,24 @@ log.logDebug("SolrDataProvider.getVirtualNodeIfExists-1 "+locator+" "+lox);			}
 		
 		listNodes(result,credentials);
 		System.out.println("LISTINSTANCES+ "+result.hasError()+" "+result.getResultObject());
+		return result;
+	}
+
+	@Override
+	public IResult listTrimmedInstanceNodes(String typeLocator, int start,
+			int count, Set<String> credentials) {
+		// Can be same type AND virtual proxy
+		// OR Can be same type AND NOT merged 
+		String query = 
+				"("+ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE+":"+typeLocator+" AND "+ITopicQuestsOntology.IS_VIRTUAL_PROXY+":true) OR "+
+				"("+ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE+":"+typeLocator+" AND NOT "+ITopicQuestsOntology.MERGE_TUPLE_PROPERTY+":* )";// OR "+
+				//ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE+":"+typeLocator;
+		System.out.println("LISTTRIMMEDINSTANCES- "+query);
+		IResult result = runQuery(query, start, count, credentials);
+		System.out.println("LISTTRIMMEDINSTANCES-1 "+result.hasError()+" "+result.getResultObject());
+		
+		listNodes(result,credentials);
+		System.out.println("LISTTRIMMEDINSTANCES+ "+result.hasError()+" "+result.getResultObject());
 		return result;
 	}
 
@@ -492,7 +515,7 @@ log.logDebug("SolrDataProvider.getVirtualNodeIfExists-1 "+locator+" "+lox);			}
 		System.out.println("ISSAFE- "+node.get(ITopicQuestsOntology.LOCATOR_PROPERTY)+" "+node.get(ITopicQuestsOntology.IS_PRIVATE_PROPERTY));
 		Boolean isPrivate = (Boolean)node.get(ITopicQuestsOntology.IS_PRIVATE_PROPERTY);
 		if (isPrivate == null) // rare event; need to understand what's going on
-			log.logError("SolrDataProvider.isSave bad boolean "+node, null);
+			log.logError("SolrDataProvider.isSafe bad boolean "+node, null);
 		else if (isPrivate) {
 			if (credentials == null)
 				return false;
@@ -655,5 +678,16 @@ log.logDebug("SolrDataProvider.getVirtualNodeIfExists-1 "+locator+" "+lox);			}
 	public void setMergeBean(IMergeImplementation merger) {
 		_model = new SolrNodeModel(this,merger);
 	}
+
+	@Override
+	public IResult listTuplesBySignature(String signature, int start,
+			int count, Set<String> credentials) {
+		String query = ITopicQuestsOntology.TUPLE_SIGNATURE_PROPERTY+":"+signature;
+		IResult result = runQuery(query, start, count, credentials);
+		listNodes(result,credentials);
+		return result;
+	}
+
+
 
 }

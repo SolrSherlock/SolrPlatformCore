@@ -95,6 +95,14 @@ public interface ITuple extends INode {
 	void setIsTransclude(boolean isT);
 	
 	/**
+	 * <p>A <em>signature</em> is a large string composed of:
+	 * subjectLocator + tupleType + objectLocator</p>
+	 * <p>It is intended to be used on tuples which link nodes</p>
+	 * @param signature
+	 */
+	void setSignature(String signature);
+	String getSignature();
+	/**
 	 * Utility
 	 * @param t
 	 */

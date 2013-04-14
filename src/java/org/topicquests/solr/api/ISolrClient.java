@@ -68,11 +68,20 @@ public interface ISolrClient {
 	 IResult deleteByLocator(String locator);
 	 
 	/**
-	 * Add data based on fields and values in <code>fields</code>
+	 * <p>Add data based on fields and values in <code>fields</code></p>
+	 * <p>Can submit data to merge and harvest</p>
 	 * @param fields
 	 * @return can return an error message
 	 */
 	 IResult addData(Map<String,Object>fields);
+	 
+	/**
+	 * <p>Add data based on fields and values in <code>fields</code></p>
+	 * <p>Can submit data to harvest</p>
+	 * @param fields
+	 * @return can return an error message
+	 */
+	 IResult addDataNoMerge(Map<String,Object>fields);
 	 
 	 /**
 	  * Add several documents

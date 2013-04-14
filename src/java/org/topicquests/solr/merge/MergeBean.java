@@ -7,9 +7,9 @@ import java.util.*;
 
 import org.topicquests.common.ResultPojo;
 import org.topicquests.common.Utils;
+import org.topicquests.common.api.ICoreIcons;
 import org.topicquests.common.api.IResult;
 import org.topicquests.common.api.ITopicQuestsOntology;
-import org.topicquests.model.api.ICoreIcons;
 import org.topicquests.model.api.IMergeImplementation;
 import org.topicquests.model.api.INode;
 import org.topicquests.model.api.INodeModel;
@@ -113,29 +113,40 @@ public class MergeBean implements IMergeImplementation {
 	 */
 	//TODO reconsider sending in the proxies to save cycles -- concurrency issues might not exist
 	@Override
-	public IResult assertMerge(INode sourceNode,
+	public IResult assertMerge(String sourceNodeLocator,
 			String targetNodeLocator, Map<String, Double> mergeData,
 			double mergeConfidence, String userLocator) {
 		// since we are not messing with versions, we should be safe -- it says here
-		log.logDebug("MergeBean.assertMerge- "+sourceNode.getLocator()+" "+targetNodeLocator);
+		log.logDebug("MergeBean.assertMerge- "+sourceNodeLocator+" "+targetNodeLocator+" "+mergeData);
 		IResult result = new ResultPojo();
-		//the theory is that TupleMergeAgent will block sending in a mix of Tuple and Node
-		boolean sourceIsTuple = sourceNode.isTuple();
-		if (sourceIsTuple)
-			return result;
 		//Nuclear Weapon -- on occasion, the same nodes are sent in.
-		if (targetNodeLocator.equals(sourceNode.getLocator()))
+		if (targetNodeLocator.equals(sourceNodeLocator))
 			return result;
+		//the theory is that TupleMergeAgent will block sending in a mix of Tuple and Node
+	//	boolean sourceIsTuple = sourceNodeLocator.isTuple();
+	//	if (sourceIsTuple)
+	//		return result;
+		IResult firstly = database.getVirtualNodeIfExists(sourceNodeLocator, credentials);
+		INode sourceNode = (INode)firstly.getResultObject();
+		log.logDebug("MergeBean-0 SOURCE "+sourceNodeLocator+" "+sourceNode.getLocator()+" "+sourceNode.getIsVirtualProxy());
+		
+		if (firstly.hasError())
+			result.addErrorString(firstly.getErrorString());
 		//try to fetch a virtualNode for targetNodeLocator
-		IResult firstly = database.getVirtualNodeIfExists(targetNodeLocator, credentials); 
+		firstly = database.getVirtualNodeIfExists(targetNodeLocator, credentials); 
 		INode theTarget = (INode)firstly.getResultObject();
+		log.logDebug("MergeBean-0a TARGET "+targetNodeLocator+" "+theTarget.getLocator()+" "+theTarget.getIsVirtualProxy());
 		if (firstly.hasError())
 			result.addErrorString(firstly.getErrorString());
 
 		if (theTarget == null) {
+			log.logError("MergeBean missing virtual target: "+targetNodeLocator,null);
 			result.addErrorString("MergeBean missing virtual target: "+targetNodeLocator);
 			return result;
 		}
+		//chance both are virtual nodes: this puppy was already merged
+		if (sourceNode.getLocator().equals(theTarget.getLocator()))
+			return result;
 		//extremely unlikely
 		boolean sourceVnodeExists = sourceNode.getIsVirtualProxy();
 		//quite possible
@@ -146,10 +157,15 @@ public class MergeBean implements IMergeImplementation {
 		// when two topics are found to merge, they are automatically assumed
 		// to share the same virtualNode; no topic can have > 1 virtualNode
 		INode virtualNode=null;
+		//////////////////////////////////////
+		// Looking for a virtualNode off the sourceNode seems pointless 
+		// except in the case where a merge already happened, in which case
+		// we won't make it this far
+		//////////////////////////////////////
 		String virtualNodeLocator = null;
-		if (!sourceVnodeExists) {
+/*		if (!sourceVnodeExists) {
 			//this could happen, but seems unlikely
-			firstly = database.getVirtualNodeIfExists(sourceNode.getLocator(), credentials);
+			firstly = database.getVirtualNodeIfExists(sourceNodeLocator.getLocator(), credentials);
 			if (firstly.hasError())
 				result.addErrorString(firstly.getErrorString());
 			
@@ -160,11 +176,11 @@ public class MergeBean implements IMergeImplementation {
 				virtualNode = temp;
 				virtualNodeLocator = temp.getLocator();
 			}
-		}
+		} */
 		//we never merge two virtual proxies; it's amazing to think how that
 		//might happen...
-		if ((sourceVnodeExists || sourceNodeHasVirtual)  && targetVnodeExists)
-			return result;
+//		if ((sourceVnodeExists || sourceNodeHasVirtual)  && targetVnodeExists)
+//			return result;
 		//purge the cache since we are going to perform surgery here
 		database.removeFromCache(sourceNode.getLocator());
 		database.removeFromCache(theTarget.getLocator());
@@ -181,6 +197,7 @@ public class MergeBean implements IMergeImplementation {
 			virtualNode = theTarget;
 			virtualNodeLocator = theTarget.getLocator();
 		}
+		log.logDebug("MergeBean-1a "+sourceNode.getLocator()+" "+virtualNodeLocator);
 		//
 		if (virtualNodeLocator == null) {			
 			//at this point, it is possible that no virtualNode exists, which
@@ -204,12 +221,14 @@ public class MergeBean implements IMergeImplementation {
 			}			
 			if (vnr.hasError())
 				result.addErrorString(vnr.getErrorString());
-			List<String>sTups = sourceNode.listTuples();
+			///////////////////////
+			//moving tuples is handled in setUnionProperties
+		/*	List<String>sTups = sourceNode.listTuples();
 			if (sTups != null && !sTups.isEmpty()) {
 				Iterator<String>itr = sTups.iterator();
 				while (itr.hasNext())
 					virtualNode.addTuple(itr.next());
-			}
+			} */
 			setUnionProperties(virtualNode,sourceNode);
 			setUnionProperties(virtualNode,theTarget);
 			//this virtual node is going to exist as a saved node when
@@ -234,61 +253,121 @@ public class MergeBean implements IMergeImplementation {
 			tupleLocator = (String)vr.getResultObject();
 			vr = this.reWireNodeGraph(theTarget.getLocator(), virtualNode.getLocator(), tupleLocator);
 			if (vr.hasError())
-				result.addErrorString(vr.getErrorString());			
-		} else if (!sourceVnodeExists) {
-			if (virtualNodeLocator.equals(sourceNode.getLocator()))
-				return result;
-			if (virtualNode == null) {
-				vr = database.getNode(virtualNodeLocator, credentials);
-				if (vr.hasError())
-					result.addErrorString(vr.getErrorString());
-				virtualNode = (INode)vr.getResultObject();
-			}
-			if (virtualNode.getIsVirtualProxy() && sourceNode.getIsVirtualProxy())
-				return result;
-			//the case where a virtualNode exists but not by the sourceNode
-			//Copy over all labels and details for both nodes
-			//this is a surgical change to virtualNode
-			if (setUnionProperties(virtualNode,sourceNode)) {
-				virtualNode.getProperties().remove(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE);
-				database.updateNode(virtualNode); //TODO possible issues with version numbers here
-			}
-			//since surgery was
-			log.logDebug("V3 "+virtualNode.getLocator()+" "+sourceNode.getLocator());
-			vr = wireMerge(virtualNode, sourceNode, mergeData, mergeConfidence, userLocator);
-			if (vr.hasError())
-				result.addErrorString(vr.getErrorString());
-			tupleLocator = (String)vr.getResultObject();
-			vr = this.reWireNodeGraph(sourceNode.getLocator(), virtualNode.getLocator(), tupleLocator);
-			if (vr.hasError())
-				result.addErrorString(vr.getErrorString());
-			
+				result.addErrorString(vr.getErrorString());	
+		/////////////////////////////////////////////////
+		// ELSE
+		//    POSSIBILITIES:
+		//       sourceVnodeExists
+		//       targetVnodeExists
+		//    NEED TO SORT OUT WHAT IS HERE
+		/////////////////////////////////////////////////
 		} else {
-			if (virtualNodeLocator.equals(theTarget.getLocator()))
-				return result;
-			if (virtualNode == null) {
-				vr = database.getNode(virtualNodeLocator, credentials);
+			if (virtualNodeLocator != null) {
+				if (targetVnodeExists) {
+					log.logDebug("VIRTUAL-1 "+virtualNode.toXML());
+					//Here because the sourceNode needs to merge with virtualNode
+					if (virtualNodeLocator.equals(sourceNode.getLocator()))
+						return result;
+					if (virtualNode.getIsVirtualProxy() && sourceNode.getIsVirtualProxy())
+						return result;
+					//TODO This fails to relate the new node with a merge tuple
+					vr = this.surgicalSetUnionProperties(virtualNode, sourceNode);
+					if (vr.hasError())
+						result.addErrorString(vr.getErrorString());
+					vr = wireMerge(virtualNode, sourceNode, mergeData, mergeConfidence, userLocator);
+					if (vr.hasError())
+						result.addErrorString(vr.getErrorString());
+					tupleLocator = (String)vr.getResultObject();
+					vr = this.reWireNodeGraph(sourceNode.getLocator(), virtualNode.getLocator(), tupleLocator);
+					if (vr.hasError())
+						result.addErrorString(vr.getErrorString());					//the case where a virtualNode exists but not by the sourceNode
+					//Copy over all labels and details for both nodes
+					//this is a surgical change to virtualNode
+					//SHOULD NOT DO SETUNION HERE: SHOULD DO SURGICALSETUNION
+	/*				if (setUnionProperties(virtualNode,sourceNode)) {
+						//WRONG - DON'T OVERWRITE
+						virtualNode.getProperties().remove(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE);
+						database.updateNode(virtualNode); //TODO possible issues with version numbers here
+					} */
+				} else if (sourceVnodeExists) {
+					log.logDebug("VIRTUAL-2 "+virtualNode.toXML());
+					//here because targetNode needs to merge with virtualNode
+					if (virtualNodeLocator.equals(theTarget.getLocator()))
+						return result;
+					if (virtualNode.getIsVirtualProxy() && theTarget.getIsVirtualProxy())
+						return result;
+					//TODO This fails to relate the new node with a merge tuple
+					vr = this.surgicalSetUnionProperties(virtualNode, theTarget);
+					if (vr.hasError())
+						result.addErrorString(vr.getErrorString());
+/*					if (setUnionProperties(virtualNode,theTarget)) {
+						//WRONG - DON'T OVERWRITE
+						virtualNode.getProperties().remove(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE);
+						database.updateNode(virtualNode); //TODO possible issues with version numbers here
+					} */
+				}
+			} else {
+				//should never get here
+				//TODO
+				log.logError("MergeBean got to impossible state", null);
+				
+			}
+/**			if (!sourceVnodeExists) {
+		
+				if (virtualNodeLocator.equals(sourceNode.getLocator()))
+					return result;
+				if (virtualNode == null) {
+					vr = database.getNode(virtualNodeLocator, credentials);
+					if (vr.hasError())
+						result.addErrorString(vr.getErrorString());
+					virtualNode = (INode)vr.getResultObject();
+				}
+				if (virtualNode.getIsVirtualProxy() && sourceNode.getIsVirtualProxy())
+					return result;
+				//the case where a virtualNode exists but not by the sourceNode
+				//Copy over all labels and details for both nodes
+				//this is a surgical change to virtualNode
+				if (setUnionProperties(virtualNode,sourceNode)) {
+					virtualNode.getProperties().remove(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE);
+					database.updateNode(virtualNode); //TODO possible issues with version numbers here
+				}
+				//since surgery was
+				log.logDebug("V3 "+virtualNode.getLocator()+" "+sourceNode.getLocator());
+				vr = wireMerge(virtualNode, sourceNode, mergeData, mergeConfidence, userLocator);
 				if (vr.hasError())
 					result.addErrorString(vr.getErrorString());
-				virtualNode = (INode)vr.getResultObject();
-			}
-			if (virtualNode.getIsVirtualProxy() && theTarget.getIsVirtualProxy())
-				return result;
-			//the case where a virtualNode exists but not by the targetNode
-			//Copy over all labels and details for both nodes
-			if (setUnionProperties(virtualNode,theTarget)) {
-				virtualNode.getProperties().remove(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE);
-				database.updateNode(virtualNode);
-			}
-			log.logDebug("V4 "+virtualNode.getLocator()+" "+theTarget.getLocator()+" "+mergeData);
-
-			vr = wireMerge(virtualNode, theTarget, mergeData, mergeConfidence, userLocator);
-			if (vr.hasError())
-				result.addErrorString(vr.getErrorString());
-			tupleLocator = (String)vr.getResultObject();
-			vr = this.reWireNodeGraph(theTarget.getLocator(), virtualNode.getLocator(), tupleLocator);
-			if (vr.hasError())
-				result.addErrorString(vr.getErrorString());			
+				tupleLocator = (String)vr.getResultObject();
+				vr = this.reWireNodeGraph(sourceNode.getLocator(), virtualNode.getLocator(), tupleLocator);
+				if (vr.hasError())
+					result.addErrorString(vr.getErrorString());
+			
+			} else {
+					if (virtualNodeLocator.equals(theTarget.getLocator()))
+						return result;
+					if (virtualNode == null) {
+						vr = database.getNode(virtualNodeLocator, credentials);
+						if (vr.hasError())
+							result.addErrorString(vr.getErrorString());
+						virtualNode = (INode)vr.getResultObject();
+				}
+				if (virtualNode.getIsVirtualProxy() && theTarget.getIsVirtualProxy())
+					return result;
+				//the case where a virtualNode exists but not by the targetNode
+				//Copy over all labels and details for both nodes
+				if (setUnionProperties(virtualNode,theTarget)) {
+					virtualNode.getProperties().remove(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE);
+					database.updateNode(virtualNode);
+				}
+				log.logDebug("V4 "+virtualNode.getLocator()+" "+theTarget.getLocator()+" "+mergeData);
+	
+				vr = wireMerge(virtualNode, theTarget, mergeData, mergeConfidence, userLocator);
+				if (vr.hasError())
+					result.addErrorString(vr.getErrorString());
+				tupleLocator = (String)vr.getResultObject();
+				vr = this.reWireNodeGraph(theTarget.getLocator(), virtualNode.getLocator(), tupleLocator);
+				if (vr.hasError())
+					result.addErrorString(vr.getErrorString());			
+			}*/
 		}
 		log.logDebug("MergeBean-2 "+result.getErrorString()+" | "+virtualNode.getLocator());
 		return result;
@@ -296,6 +375,123 @@ public class MergeBean implements IMergeImplementation {
 	
 	/**
 	 * <p>Perform a <em>Set Union</em> on various key/value pairs</p>
+	 * <p>This is ONLY appropriate for changes to an existing virtual proxy</p>
+	 * @param virtualNode
+	 * @param mergedNode
+	 * @return
+	 */
+	IResult surgicalSetUnionProperties(INode virtualNode, INode mergedNode) {
+		IResult result = new ResultPojo();
+		String sourceNodeLocator = virtualNode.getLocator();
+		log.logDebug("MergeBean.surgicalSetUnionProperties- "+virtualNode.getLocator()+" "+mergedNode.getLocator());
+		Map<String,Object> updateMap = new HashMap<String,Object>();
+		Map<String,Object> newMap = new HashMap<String,Object>();
+		updateMap.put(ITopicQuestsOntology.LOCATOR_PROPERTY, sourceNodeLocator);
+		//other properties -- doing surgery on the map
+		//note: this will pick up all the labels and details in all languages
+		Map<String,Object>sourceMap = mergedNode.getProperties();
+		Map<String,Object>virtMap = virtualNode.getProperties();
+		Iterator<String>keys = sourceMap.keySet().iterator();
+		String key;
+		Object os;
+		Object ov;
+		List<String>sxx;
+		List<String>vxx;
+		IResult x = null;
+		while (keys.hasNext()) {
+			key = keys.next();
+			log.logDebug("MergeBean.surgicalSetUnionProperties-1 "+key);
+			if (okToUse(key)) {
+				os = sourceMap.get(key);
+				ov = virtMap.get(key);
+				log.logDebug("MergeBean.surgicalSetUnionProperties-2 "+key+" "+ov+" "+os);
+				//resourceURL http://someserver.org/ http://someserver.org/
+				//details [Another key point was made that that is false, A key point was made that this is true] On the other hand, anything is possible
+				if (os instanceof String ||
+					os instanceof Date ||
+					os instanceof Long ||
+					os instanceof Double ||
+					os instanceof Integer ||
+					os instanceof Float ||
+					os instanceof Boolean) {
+					if (ov == null) {
+						//the case where the property does not yet exist
+						x = addPropertyValue(virtualNode, key, os);
+						if (x.hasError())
+							result.addErrorString(x.getErrorString());
+						log.logDebug("MergeBean.surgicalSetUnionProperties-2a "+x.getErrorString());
+//						newMap = new HashMap<String,Object>();
+//						newMap.put("set",os);
+//						updateMap.put(key, newMap);
+					} else if (ov instanceof String) {
+						//the case where the property does exist
+						
+						if (!ov.equals(os)) {
+							if (okToAdd(key)) {
+							//2 string entries, same key
+//							vxx = new ArrayList<String>();
+//							vxx.add((String)ov);
+//							vxx.add((String)os);
+//							newMap = new HashMap<String,Object>();
+//							newMap.put("set",vxx);
+//							updateMap.put(key, newMap);
+							x = addPropertyValue(virtualNode, key, os);
+							if (x.hasError())
+								result.addErrorString(x.getErrorString());
+							log.logDebug("MergeBean.surgicalSetUnionProperties-2b "+key+" "+x.getErrorString());
+							}
+						}
+					} else if (ov instanceof List) {
+						vxx = (List<String>)ov;
+						if (!vxx.contains((String)os)) {
+//							vxx.add((String)os);
+//							newMap = new HashMap<String,Object>();
+//							newMap.put("set",vxx);
+//							updateMap.put(key, newMap);
+							x = addPropertyValue(virtualNode, key, os);
+							if (x.hasError())
+								result.addErrorString(x.getErrorString());
+							log.logDebug("MergeBean.surgicalSetUnionProperties-2c "+key+" "+x.getErrorString());
+						}
+					}
+				} else { //os must be a list
+					boolean isNull = (ov == null);
+					boolean isNew = false;
+					sxx = (List<String>)os;
+					if (isNull) {
+						vxx = new ArrayList<String>();
+						
+					} else
+						vxx = (List<String>)ov;
+					int len = sxx.size();
+					for (int i=0;i<len;i++) {
+						if (!vxx.contains(sxx.get(i))) {
+//							vxx.add(sxx.get(i));
+							x = addPropertyValue(virtualNode, key, sxx.get(i));
+							if (x.hasError())
+								result.addErrorString(x.getErrorString());
+						}
+					}
+//					newMap = new HashMap<String,Object>();
+//					newMap.put("set",vxx);
+//					updateMap.put(key, newMap);
+					//WE NEVER SEE THIS
+					if (x != null)
+						log.logDebug("MergeBean.surgicalSetUnionProperties-3 "+key+" "+x.getErrorString());
+				}
+			}
+		}		
+		//MergeBean.surgicalSetUnionProperties-4 {locator=546f7528-63b2-4d08-a471-23b28e94979b}
+		log.logDebug("MergeBean.surgicalSetUnionProperties-4 "+result.getErrorString());
+//		IResult temp = database.partialUpdateData(updateMap);
+//		if (temp.hasError())
+//			result.addErrorString(temp.getErrorString());
+		database.removeFromCache(sourceNodeLocator);
+		return result;
+	}
+	/**
+	 * <p>Perform a <em>Set Union</em> on various key/value pairs</p>
+	 * <p>This is ONLY appropriate for creation of a virtual proxy</p>
 	 * @param virtualNode
 	 * @param mergedNode
 	 * @param isTuple
@@ -324,35 +520,55 @@ public class MergeBean implements IMergeImplementation {
 				os = sourceMap.get(key);
 				ov = virtMap.get(key);
 				log.logDebug("MergeBean.setUnionProperties-2 "+key+" "+ov+" "+os);
-				if (os instanceof String ||
-					os instanceof Date ||
-					os instanceof Long ||
-					os instanceof Double ||
-					os instanceof Integer ||
-					os instanceof Float ||
-					os instanceof Boolean) {
-					if (ov == null) {
-						virtMap.put(key, os);
-						result = true;
-					} else {
-						//TODO what to do if they are not equal?
-					}
-				} else {
-					sxx = (List<String>)os;
-					if (ov == null)
-						vxx = new ArrayList<String>();
-					else
-						vxx = (List<String>)ov;
-					int len = sxx.size();
-					for (int i=0;i<len;i++) {
-						if (!vxx.contains(sxx.get(i))) {
-							vxx.add(sxx.get(i));
+				
+					if (os instanceof String ||
+						os instanceof Date ||
+						os instanceof Long ||
+						os instanceof Double ||
+						os instanceof Integer ||
+						os instanceof Float ||
+						os instanceof Boolean) {
+						if (ov == null) {
+							virtMap.put(key, os);
 							result = true;
+						} else if (ov instanceof String && os instanceof String) {
+							//ov and os are strings: same key; make a list
+							if (!ov.equals(os)) {
+								vxx = new ArrayList<String>();
+								vxx.add((String)ov);
+								vxx.add((String)os);
+								virtMap.put(key, vxx);
+								log.logDebug("MergeBean.setUnionProperties-3 "+key+" "+vxx);
+							}
+						} else if (ov instanceof List) {
+							vxx = (List<String>)ov;
+							if (!vxx.isEmpty() && !vxx.contains((String)os)) {
+								vxx.add((String)os);
+								virtMap.put(key, vxx);
+								log.logDebug("MergeBean.setUnionProperties-4 "+key+" "+vxx+" "+virtMap);
+							}
+						} else {
+							log.logDebug("WIERD "+key+" "+ov+" | "+os);
+						}
+					} else { //os must be a list
+						sxx = (List<String>)os;
+						log.logDebug("MergeBean.setUnionProperties-5 "+key+" "+sxx);
+						if (ov == null)
+							vxx = new ArrayList<String>();
+						else //TODO TEST FOR LIST OR STRING  XXXXX
+							vxx = (List<String>)ov;
+						int len = sxx.size();
+						for (int i=0;i<len;i++) {
+							if (!vxx.contains(sxx.get(i))) {
+								vxx.add(sxx.get(i));
+								result = true;
+							}
+						}
+						if (!vxx.isEmpty()) {
+							virtMap.put(key, vxx);
+							log.logDebug("MergeBean.setUnionProperties-5a "+key+" "+vxx);
 						}
 					}
-					virtMap.put(key, vxx);
-					log.logDebug("MergeBean.setUnionProperties-3 "+key+" "+vxx);
-				}
 			}
 		}
 		return result;
@@ -373,7 +589,26 @@ public class MergeBean implements IMergeImplementation {
 			return false;
 		return true;
 	}
+	/**
+	 * Adding to a singleValued field
+	 * @param key
+	 * @return false if not ok to add
+	 */
+	boolean okToAdd(String key) {
+		if (key.equals(ITopicQuestsOntology.LOCATOR_PROPERTY) ||
+			key.equals(ITopicQuestsOntology.CREATED_DATE_PROPERTY) ||
+			key.equals(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY) ||
+			key.equals(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE)||
+			key.equals(ITopicQuestsOntology.CREATOR_ID_PROPERTY) ||
+			key.equals(ITopicQuestsOntology.PSI_PROPERTY_TYPE) ||
+			key.equals(ITopicQuestsOntology.RESOURCE_URL_PROPERTY) ||
+			key.equals(ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE) ||
+			key.equals(ITopicQuestsOntology.IS_PRIVATE_PROPERTY))
+			return false;
+		return true;
+	}
 
+	
 	/**
 	 * 
 	 * @param o
@@ -520,7 +755,7 @@ public class MergeBean implements IMergeImplementation {
 
 	/**
 	 * Forge a merge relation--not using the version in INodeModel
-	 * @param sourceNode
+	 * @param virtualNode
 	 * @param targetNode
 	 * @param userId
 	 * @param smallImagePath
@@ -530,21 +765,23 @@ public class MergeBean implements IMergeImplementation {
 	 * @param mergeData
 	 * @return
 	 */
-	private IResult relateNodes(INode sourceNode, INode targetNode,
+	private IResult relateNodes(INode virtualNode, INode targetNode,
 			String userId, String smallImagePath,
 			String largeImagePath, boolean isTransclude, boolean isPrivate, Map<String, Double> mergeData) {
 		String relationTypeLocator = ITopicQuestsOntology.MERGE_ASSERTION_TYPE;
-		database.removeFromCache(sourceNode.getLocator());
+		database.removeFromCache(virtualNode.getLocator());
 		database.removeFromCache(targetNode.getLocator());
 		IResult result = new ResultPojo();
+		String signature = virtualNode.getLocator()+ITopicQuestsOntology.MERGE_ASSERTION_TYPE+targetNode.getLocator();
 		//NOTE that we make the tuple an instance of the relation type, not of TUPLE_TYPE
 		ITuple t = (ITuple)nodeModel.newInstanceNode(relationTypeLocator, relationTypeLocator, 
-				sourceNode.getLocator()+" "+relationTypeLocator+" "+targetNode.getLocator(), "en", userId, smallImagePath, largeImagePath, isPrivate).getResultObject();
+				virtualNode.getLocator()+" "+relationTypeLocator+" "+targetNode.getLocator(), "en", userId, smallImagePath, largeImagePath, isPrivate).getResultObject();
 		t.setIsTransclude(isTransclude);
 		t.setObject(targetNode.getLocator());
 		t.setObjectType(ITopicQuestsOntology.NODE_TYPE);
-		t.setSubjectLocator(sourceNode.getLocator());
+		t.setSubjectLocator(virtualNode.getLocator());
 		t.setSubjectType(ITopicQuestsOntology.NODE_TYPE);
+		t.setSignature(signature);
 		Iterator<String>itx = mergeData.keySet().iterator();
 		String reason;
 		while (itx.hasNext()) {
@@ -552,17 +789,18 @@ public class MergeBean implements IMergeImplementation {
 			t.addMergeReason(reason+" "+mergeData.get(reason));
 		}
 		IResult x = database.putNode(t);
-		log.logDebug("MergeBean.relateNodes "+sourceNode.getLocator()+" "+targetNode.getLocator()+" "+t.getLocator());
+		log.logDebug("MergeBean.relateNodes "+virtualNode.getLocator()+" "+targetNode.getLocator()+" "+t.getLocator());
 		if (x.hasError())
 			result.addErrorString(x.getErrorString());
 		String tLoc = t.getLocator();
 		//save the tuple's locator in the output
 		result.setResultObject(tLoc);
-		sourceNode.setMergeTupleLocator(tLoc);
-		IResult vr = changePropertyValue(sourceNode,ITopicQuestsOntology.MERGE_TUPLE_PROPERTY,tLoc);
+		IResult vr = addPropertyValue(virtualNode,ITopicQuestsOntology.MERGE_TUPLE_PROPERTY,tLoc);
 		if (vr.hasError())
 			result.addErrorString(vr.getErrorString());
-		targetNode.setMergeTupleLocator(tLoc);
+		//add the value to the node after it's been surgically added
+		virtualNode.addMergeTupleLocator(tLoc);
+		targetNode.addMergeTupleLocator(tLoc);
 		vr = changePropertyValue(targetNode,ITopicQuestsOntology.MERGE_TUPLE_PROPERTY,tLoc);
 			if (vr.hasError())
 				result.addErrorString(vr.getErrorString());
@@ -578,7 +816,7 @@ public class MergeBean implements IMergeImplementation {
 	 * @return
 	 */
 	IResult changePropertyValue(INode node, String key, String newValue) {
-
+		log.logDebug("MergeBean.changePropertyValue- "+node.getLocator()+" "+key+" "+newValue);
 		String sourceNodeLocator = node.getLocator();
 		Map<String,Object> updateMap = new HashMap<String,Object>();
 		Map<String,String> newMap = new HashMap<String,String>();
@@ -588,6 +826,54 @@ public class MergeBean implements IMergeImplementation {
 		IResult result = database.partialUpdateData(updateMap);;
 		database.removeFromCache(sourceNodeLocator);
 		return result;
+	}
+	
+	IResult addPropertyValue(INode node, String key, Object newValue) {
+		log.logDebug("MergeBean.addPropertyValue- "+node.getLocator()+" "+key+" "+newValue);
+		String sourceNodeLocator = node.getLocator();
+		Map<String,Object> propMap = node.getProperties();
+		Object ox = propMap.get(key);
+		Map<String,Object> updateMap = new HashMap<String,Object>();
+		Map<String,Object> newMap = new HashMap<String,Object>();
+		updateMap.put(ITopicQuestsOntology.LOCATOR_PROPERTY, sourceNodeLocator);
+		List<String>vxx;
+		IResult result = new ResultPojo();
+		IResult x=null;
+		log.logDebug("MergeBean.addPropertyValue-1 "+node.getLocator()+" "+key+" "+newValue+" | "+ox);
+		if (ox == null) {
+			newMap.put("set",newValue);
+			updateMap.put(key, newMap);
+			x = database.partialUpdateData(updateMap);
+		} else if (!ox.equals(newValue)) {
+			if (ox instanceof String) {
+			//vxx = new ArrayList<String>();
+			//vxx.add((String)ox);
+			//vxx.add((String)newValue);
+				newMap.put("add", newValue);
+				updateMap.put(key, newMap);
+				x = database.partialUpdateData(updateMap);
+			
+			} else if (ox instanceof List ){
+				//ox must be a list
+				vxx = (List<String>)ox;
+				//vxx.add((String)newValue);
+				if (!vxx.contains(newValue)) {
+					newMap.put("add", newValue);	
+					updateMap.put(key, newMap);
+					x = database.partialUpdateData(updateMap);
+				}
+			} else {
+				//just overwrite the puppy
+				newMap.put("set",newValue);
+				updateMap.put(key, newMap);
+				x = database.partialUpdateData(updateMap);
+			}
+		}
+		database.removeFromCache(sourceNodeLocator);
+		if (x != null && x.hasError())
+			result.addErrorString(x.getErrorString());
+		return result;
+
 	}
 
 }

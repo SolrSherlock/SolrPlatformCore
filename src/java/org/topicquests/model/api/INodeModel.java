@@ -145,14 +145,14 @@ public interface INodeModel {
 	   * a parent node of some time, then the VirtualProxy must substitute for that,
 	   * and both nodes must be removed as child nodes; the VirtualProxy always stands
 	   * for those nodes in that graph.</p>
-	   * @param sourceNode
+	   * @param sourceNodeLocator
 	   * @param targetNodeLocator
 	   * @param mergeData
 	   * @param mergeConfidence
 	   * @param userLocator
 	   * @return the locator of the created {@link ITuple}
 	   */
-	  IResult assertMerge(INode sourceNode, String targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
+	  IResult assertMerge(String sourceNodeLocator, String targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
 	  
 	  /**
 	   * Assert that the two nodes <em>might need to be merged</em> based on the

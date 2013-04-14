@@ -160,13 +160,13 @@ public class SolrNodeModel implements INodeModel {
 			String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate) {
 		IResult result = new ResultPojo();
 		Set<String> credentials = getDefaultCredentials(userId);
-		String details = sourceNodeLocator+" "+relationTypeLocator+" "+targetNodeLocator;
 		//fetch the source actor node
 		IResult x = database.getNode(sourceNodeLocator, credentials);
 		INode nxA = (INode)x.getResultObject();
 		if (x.hasError())
 			result.addErrorString(x.getErrorString());
 		if (nxA != null) {
+			//fetch target actor node
 			IResult y = database.getNode(targetNodeLocator,credentials);
 			INode nxB = (INode)y.getResultObject();
 			if (y.hasError())
@@ -175,6 +175,7 @@ public class SolrNodeModel implements INodeModel {
 				y = relateExistingNodes(nxA, nxB, relationTypeLocator,userId,smallImagePath,largeImagePath,isTransclude,isPrivate);
 				if (y.hasError())
 					result.addErrorString(y.getErrorString());
+				result.setResultObject(y.getResultObject());
 			}
 				
 		}
@@ -189,6 +190,7 @@ public class SolrNodeModel implements INodeModel {
 		database.removeFromCache(sourceNode.getLocator());
 		database.removeFromCache(targetNode.getLocator());
 		IResult result = new ResultPojo();
+		String signature = sourceNode.getLocator()+relationTypeLocator+targetNode.getLocator();
 		//NOTE that we make the tuple an instance of the relation type, not of TUPLE_TYPE
 		ITuple t = (ITuple)this.newInstanceNode(relationTypeLocator, relationTypeLocator, 
 				sourceNode.getLocator()+" "+relationTypeLocator+" "+targetNode.getLocator(), "en", userId, smallImagePath, largeImagePath, isPrivate).getResultObject();
@@ -197,6 +199,7 @@ public class SolrNodeModel implements INodeModel {
 		t.setObjectType(ITopicQuestsOntology.NODE_TYPE);
 		t.setSubjectLocator(sourceNode.getLocator());
 		t.setSubjectType(ITopicQuestsOntology.NODE_TYPE);
+		t.setSignature(signature);
 		IResult x = database.putNode(t);
 		if (x.hasError())
 			result.addErrorString(x.getErrorString());
@@ -280,6 +283,7 @@ public class SolrNodeModel implements INodeModel {
 			String relationTypeLocator, String userId, String smallImagePath,
 			String largeImagePath, boolean isTransclude, boolean isPrivate) {
 		IResult result = new ResultPojo();
+		String signature = sourceNode.getLocator()+relationTypeLocator+targetNode.getLocator();
 		ITuple t = (ITuple)this.newInstanceNode(relationTypeLocator, relationTypeLocator, 
 				sourceNode.getLocator()+" "+relationTypeLocator+" "+targetNode.getLocator(), "en", userId, smallImagePath, largeImagePath, isPrivate).getResultObject();
 		t.setIsTransclude(isTransclude);
@@ -287,6 +291,7 @@ public class SolrNodeModel implements INodeModel {
 		t.setObjectType(ITopicQuestsOntology.NODE_TYPE);
 		t.setSubjectLocator(sourceNode.getLocator());
 		t.setSubjectType(ITopicQuestsOntology.NODE_TYPE);
+		t.setSignature(signature);
 		String tLoc = t.getLocator();
 		if (isPrivate) {
 			sourceNode.addRestrictedTuple(tLoc);
@@ -324,11 +329,11 @@ public class SolrNodeModel implements INodeModel {
 		return result;
 	}
 
-	public IResult assertMerge(INode sourceNode,
+	public IResult assertMerge(String sourceNodeLocator,
 			String targetNodeLocator, Map<String, Double> mergeData,
 			double mergeConfidence, String userLocator) {
 		if (merger != null)
-			return merger.assertMerge(sourceNode, targetNodeLocator, mergeData, mergeConfidence, userLocator);
+			return merger.assertMerge(sourceNodeLocator, targetNodeLocator, mergeData, mergeConfidence, userLocator);
 		IResult result = new ResultPojo();
 		result.addErrorString("SolrNodeModel.assertMerge called: No Merger Installed");
 		log.logError("SolrNodeModel.assertMerge called: No Merger Installed", null);
@@ -409,8 +414,8 @@ public class SolrNodeModel implements INodeModel {
 		Map<String,String> newMap = new HashMap<String,String>();
 		Map<String,Object> myMap = node.getProperties();
 		updateMap.put(ITopicQuestsOntology.LOCATOR_PROPERTY, sourceNodeLocator);
-		if (myMap.get(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE) != null)
-			updateMap.put(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE, myMap.get(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE));
+//		if (myMap.get(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE) != null)
+//			updateMap.put(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE, myMap.get(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE));
 		newMap.put("set",newValue);
 		updateMap.put(key, newMap);
 		IResult result = database.partialUpdateData(updateMap);;
@@ -428,8 +433,8 @@ public class SolrNodeModel implements INodeModel {
 		List<String>values = makeListIfNeeded( myMap.get(key));
 		String what = getUpdateKey(values);
 		updateMap.put(ITopicQuestsOntology.LOCATOR_PROPERTY, sourceNodeLocator);
-		if (myMap.get(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE) != null)
-			updateMap.put(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE, myMap.get(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE));
+//		if (myMap.get(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE) != null)
+//			updateMap.put(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE, myMap.get(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE));
 		newMap.put(what,newValue);
 		updateMap.put(key, newMap);
 		IResult result = database.partialUpdateData(updateMap);

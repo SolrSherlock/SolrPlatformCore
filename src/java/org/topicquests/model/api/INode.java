@@ -60,17 +60,23 @@ public interface INode {
 	String getCreatorId();
 	
 	/**
-	 * A node can have one and only one merge tuple if it has been
-	 * merged.
+	 * <p>A node can have one and only one merge tuple if it has been merged</p>
+	 * <p>A VirtualNode can have many merge tuples</p>
 	 * @param locator
 	 */
-	void setMergeTupleLocator(String locator);
+	void addMergeTupleLocator(String locator);
 	
 	/**
 	 * Can return <code>null</code>
 	 * @return
 	 */
 	String getMergeTupleLocator();
+	
+	/**
+	 * For VirtualNodes
+	 * @return
+	 */
+	List<String> listMergeTupleLocators();
 	
 	/**
 	 * Return <code>true</code> if this {@link INode} is a {@link ITuple}

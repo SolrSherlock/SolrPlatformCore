@@ -17,13 +17,13 @@ package org.topicquests.solr;
 
 import java.util.Date;
 
+import org.topicquests.common.api.ICoreIcons;
 import org.topicquests.common.api.IResult;
 import org.topicquests.model.api.IEventLegend;
 import org.topicquests.model.api.INode;
 import org.topicquests.model.api.INodeModel;
 import org.topicquests.model.api.IPersonEvent;
 import org.topicquests.model.api.IPersonEventModel;
-import org.topicquests.model.api.ICoreIcons;
 import org.topicquests.model.api.IPersonLegend;
 import org.topicquests.solr.api.ISolrDataProvider;
 

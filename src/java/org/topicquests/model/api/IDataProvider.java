@@ -108,7 +108,19 @@ public interface IDataProvider {
 	  
 	  IResult removeNode(String locator);
 
+	  /**
+	   * Put <code>node</code> in the database. Subject it to merge and harvest
+	   * @param node
+	   * @return
+	   */
 	  IResult putNode(INode node);
+	  
+	  /**
+	   * Put <code>node</code> in the database. Subject to harvest
+	   * @param node
+	   * @return
+	   */
+	  IResult putNodeNoMerge(INode node);
 	  
 	  /**
 	   * <p>If <code>locator</code> is a <em>merged node</em>, then
@@ -178,6 +190,15 @@ public interface IDataProvider {
 	  IResult listNodesByType(String typeLocator,int start, int count, Set<String> credentials);
 	  
 	  /**
+	   * List all {@link ITuple} objects with <code>signature</code>
+	   * @param signature
+	   * @param start
+	   * @param count
+	   * @param credentials
+	   * @return
+	   */
+	  IResult listTuplesBySignature(String signature, int start, int count, Set<String>credentials);
+	  /**
 	   * Really, this is the same as <code>listNodesByType</code>
 	   * @param typeLocator
 	   * @param start
@@ -186,6 +207,18 @@ public interface IDataProvider {
 	   * @return a list of [@link INode} objects or <code>null</code>
 	   */
 	  IResult listInstanceNodes(String typeLocator, int start, int count, Set<String> credentials);
+	  
+	  /**
+	   * <p>List nodes by type, except if any nodes are merged, do not list them. All virtual nodes
+	   * will be listed</p>
+	   * @param typeLocator
+	   * @param start
+	   * @param count
+	   * @param credentials
+	   * @return
+	   */
+	  IResult listTrimmedInstanceNodes(String typeLocator, int start, int count, Set<String>credentials);
+	  
 	  
 	  IResult listSubclassNodes(String superclassLocator, int start, int count, Set<String> credentials);
 

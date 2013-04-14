@@ -207,4 +207,10 @@ public class Solr4Client implements ISolrClient {
 		return null;
 	}
 
+	@Override
+	public IResult addDataNoMerge(Map<String, Object> fields) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

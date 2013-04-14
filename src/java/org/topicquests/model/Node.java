@@ -18,8 +18,10 @@ package org.topicquests.model;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
+//import net.sf.json.JSONObject;
+//import net.sf.json.JSONSerializer;
+
+import org.json.simple.JSONObject;
 
 import org.apache.solr.schema.DateField;
 import org.topicquests.model.api.ICitation;
@@ -43,23 +45,27 @@ import org.topicquests.common.api.IRelationsLegend;
 public class Node implements 
 		INode, ITuple, ICitation, 
 		IValueMatrix, IConceptualGraph, IPersonEvent {
-	private Map<String,Object>properties;
+	private JSONObject properties;
 	
 	/**
 	 * 
 	 */
 	public Node() {
-		this(new HashMap<String,Object>());
+		properties = new JSONObject();
 	}
 
 	/**
 	 * Constructor used when creating from a Solr hit
 	 * @param props 
 	 */
-	public Node(Map<String,Object>props) {
-		properties = props;
+	public Node(Map props) {
+		properties = new JSONObject(props);
 	}
 	
+	 JSONObject jsonToMap(Map<String,Object> props) {
+		//TODO this might need to be converted
+		return  (JSONObject)props;
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.topicquests.model.api.INode#getLocator()
@@ -446,17 +452,7 @@ public class Node implements
 	}
 
 	public String toJSON() {
-		JSONObject jo = (JSONObject) JSONSerializer.toJSON( properties ); 
-		//Solr date properties are actually some sort of Date object
-		//first, make sure we are dealing with that
-		Object o = properties.get(ITopicQuestsOntology.CREATED_DATE_PROPERTY);
-		if (o != null && o instanceof Date)
-			jo.put(ITopicQuestsOntology.CREATED_DATE_PROPERTY, o.toString());
-		//if we add edited date property, must fix that too
-		o = properties.get(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY);
-		if (o != null && o instanceof Date)
-			jo.put(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY, o.toString());
-		return jo.toString();
+		return properties.toJSONString();
 	}
 
 	public IResult doUpdate() {
@@ -854,13 +850,46 @@ public class Node implements
 	}
 
 	@Override
-	public void setMergeTupleLocator(String locator) {
-		properties.put(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY, locator);
+	public void addMergeTupleLocator(String locator) {
+		Object o = properties.get(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY);
+		if (o == null)
+			properties.put(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY, locator);
+		else if (o instanceof String) {
+			if (!o.equals(locator)) {
+				List<String> x = new ArrayList<String>();
+				x.add((String)o);
+				x.add(locator);
+				properties.put(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY, x);
+			}
+		} else {
+			List<String>x = (List<String>)o;
+			if (!x.contains(locator)) {
+				x.add(locator);
+				properties.put(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY, x);
+			}
+		}
 	}
 
 	@Override
 	public String getMergeTupleLocator() {
-		return (String)properties.get(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY);
+		Object o = properties.get(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY);
+		if (o instanceof List) 
+			return ((List<String>)o).get(0);
+		else
+			return (String)o;
+	}
+
+	@Override
+	public List<String> listMergeTupleLocators() {
+		Object o = properties.get(ITopicQuestsOntology.MERGE_TUPLE_PROPERTY);
+		List<String>result = null;
+		if (o instanceof List) 
+			result = (List<String>)o;
+		else {
+			result = new ArrayList<String>();
+			result.add((String)o);
+		}
+		return result;
 	}
 
 	@Override
@@ -872,5 +901,16 @@ public class Node implements
 	public String getThemeLocator() {
 		return (String)properties.get(ITopicQuestsOntology.TUPLE_THEME_PROPERTY);
 	}
+
+	@Override
+	public void setSignature(String signature) {
+		properties.put(ITopicQuestsOntology.TUPLE_SIGNATURE_PROPERTY, signature);
+	}
+
+	@Override
+	public String getSignature() {
+		return (String)properties.get(ITopicQuestsOntology.TUPLE_SIGNATURE_PROPERTY);
+	}
+
 
 }

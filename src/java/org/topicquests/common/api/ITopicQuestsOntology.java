@@ -133,6 +133,10 @@ public interface ITopicQuestsOntology {
 		    INSTANCE_OF_PROPERTY_TYPE					= "instanceOf",
 	//	    HAS_INSTANCES_PROPERTY_TYPE					= "HasInstances",
 		    /**
+		     * A multi-valued property which is all the parents of this node
+		     */
+		    TRANSITIVE_CLOSURE_PROPERTY_TYPE			= "tranClose",
+		    /**
 		     * Predefines as subclass of LEGEND_TYPE and PROPERTY_TYPE
 		     */
 		    LEGEND_PROPERTY_TYPE 						= "LegendPropertyType", //later
@@ -221,6 +225,7 @@ public interface ITopicQuestsOntology {
 			TUPLE_SUBJECT_ROLE_PROPERTY					= "tupleSubjectRole",
 			TUPLE_OBJECT_ROLE_PROPERTY					= "tupleObjectRole",
 			TUPLE_THEME_PROPERTY						= "tupleTheme",
+			TUPLE_SIGNATURE_PROPERTY					= "tupleSig",
 			
 			LARGE_IMAGE_PATH							= "largeIcon",
 			SMALL_IMAGE_PATH							= "smallIcon",

@@ -21,10 +21,11 @@ import org.topicquests.model.api.IEventLegend;
 import org.topicquests.model.api.IPersonLegend;
 import org.topicquests.common.ResultPojo;
 import org.topicquests.common.api.IBootstrap;
+import org.topicquests.common.api.ICoreIcons;
 import org.topicquests.common.api.IResult;
 import org.topicquests.common.api.ISocialLegend;
-import org.topicquests.model.api.ICoreIcons;
 import org.topicquests.common.api.ITopicQuestsOntology;
+import org.topicquests.common.api.INodeTypes;
 
 //TODO IDublinCoreOntology? other?
 
@@ -76,6 +77,31 @@ public class CoreBootstrap extends BootstrapBase implements IBootstrap {
 				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,ITopicQuestsOntology.VIRTUAL_NODE_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Virtual Node Type", "The TopicQuests typology virtual node type.", result);
 				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,ISocialLegend.TAG_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Tag Type", "The TopicQuests Social typology tag type.", result);
 				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,ISocialLegend.ANNOTATION_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Annotation Type", "The TopicQuests Social typology annotation type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.AVATAR_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Avatar Type", "The TopicQuests NodeTypes typology avatar type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.BLOG_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Blog Type", "The TopicQuests NodeTypes typology blog type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.CHALLENGE_TYPE,ICoreIcons.CHALLENGE_SM,ICoreIcons.CHALLENGE,"Challenge Type", "The TopicQuests NodeTypes typology challenge type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.CLAIM_TYPE,ICoreIcons.CLAIM_SM,ICoreIcons.CLAIM,"Claim Type", "The TopicQuests NodeTypes typology claim type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.CON_TYPE,ICoreIcons.CON_SM,ICoreIcons.CON,"Con Argument Type", "The TopicQuests NodeTypes typology con argument type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.CONVERSATION_MAP_TYPE,ICoreIcons.MAP_SM,ICoreIcons.MAP,"Conversation Map Type", "The TopicQuests NodeTypes typology conversation map type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.ESSAY_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Essay Type", "The TopicQuests NodeTypes typology essay type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.EVIDENCE_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Evidence Type", "The TopicQuests NodeTypes typology evidence type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.GUILD_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Guild Type", "The TopicQuests NodeTypes typology guild type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.ISSUE_TYPE,ICoreIcons.ISSUE_SM,ICoreIcons.ISSUE,"Issue Type", "The TopicQuests NodeTypes typology issue type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.MICROBLOG_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Microblog Type", "The TopicQuests NodeTypes typology microblog type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.ORGANIZATION_TYPE,ICoreIcons.ORGANIZATION_SM,ICoreIcons.ORGANIZATION,"Organization Type", "The TopicQuests NodeTypes typology organization type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.PERSPECTIVE_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Perspective Type", "The TopicQuests NodeTypes typology perspective type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.POSITION_TYPE,ICoreIcons.POSITION_SM,ICoreIcons.POSITION,"Position Type", "The TopicQuests NodeTypes typology position type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.PRO_TYPE,ICoreIcons.PRO_SM,ICoreIcons.PRO,"Pro Argument Type", "The TopicQuests NodeTypes typology pro argument type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.PROJECT_TYPE,ICoreIcons.PROJECT_SM,ICoreIcons.PROJECT,"Project Type", "The TopicQuests NodeTypes typology project type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.RESOURCE_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Resource Type", "The TopicQuests NodeTypes typology resource type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.SOLUTION_TYPE,ICoreIcons.SOLUTION_SM,ICoreIcons.SOLUTION,"Solution Type", "The TopicQuests NodeTypes typology solution type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.SUMMARY_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Summary Type", "The TopicQuests NodeTypes typology summary type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.TAG_TYPE,ICoreIcons.TAG_SM,ICoreIcons.TAG,"Tag Type", "The TopicQuests NodeTypes typology tag type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.THEME_TYPE,ICoreIcons.THEME_SM,ICoreIcons.THEME,"Theme Type", "The TopicQuests NodeTypes typology theme type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.BOOKMARK_TYPE,ICoreIcons.BOOKMARK_SM,ICoreIcons.BOOKMARK,"Bookmark Type", "The TopicQuests NodeTypes typology bookmark type.", result);
+				makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,INodeTypes.QUEST_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Quest Type", "The TopicQuests NodeTypes typology quest type.", result);
+
+				
 			makeSubclassNode(ITopicQuestsOntology.TYPE_TYPE,ITopicQuestsOntology.RELATION_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Relation Type", "The TopicQuests typology relation node type.", result);
 				makeSubclassNode(ITopicQuestsOntology.RELATION_TYPE,ITopicQuestsOntology.MERGE_ASSERTION_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Merge Assertion Type", "The TopicQuests typology merge assertion node type.", result);
 				makeSubclassNode(ITopicQuestsOntology.RELATION_TYPE,ITopicQuestsOntology.POSSIBLE_MERGE_ASSERTIONTYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Possible Merge Assertion Type", "The TopicQuests typology possible merge assertion node type.", result);
@@ -125,6 +151,7 @@ public class CoreBootstrap extends BootstrapBase implements IBootstrap {
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.TUPLE_SUBJECT_ROLE_PROPERTY,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Tuple Subject Role Property Type", "The TopicQuests typology tuple subject's role property type.", result);
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.TUPLE_OBJECT_ROLE_PROPERTY,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Tuple Object Role Property Type", "The TopicQuests typology tuple object's role property type.", result);
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.TUPLE_THEME_PROPERTY,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Tuple Theme Property Type", "The TopicQuests typology tuple theme property type.", result);
+			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.TUPLE_SIGNATURE_PROPERTY,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Tuple Signature Property Type", "The TopicQuests typology tuple signature property type.", result);
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.SCOPE_LIST_PROPERTY_TYPE,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Scope List Property Type", "The TopicQuests typology scope list property type.", result);
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.PSI_PROPERTY_TYPE,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"PSI Property Type", "The TopicQuests typology PSI (published subject indicator) property type.", result);
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.RESOURCE_URL_PROPERTY,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Resource URL Property Type", "The TopicQuests typology resource URL property type.", result);

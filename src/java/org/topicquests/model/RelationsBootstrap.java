@@ -16,11 +16,11 @@
 package org.topicquests.model;
 
 import org.topicquests.common.ResultPojo;
+import org.topicquests.common.api.ICoreIcons;
 import org.topicquests.common.api.IRelationsLegend;
 import org.topicquests.common.api.IBootstrap;
 import org.topicquests.common.api.IResult;
 import org.topicquests.common.api.ITopicQuestsOntology;
-import org.topicquests.model.api.ICoreIcons;
 import org.topicquests.model.api.IDataProvider;
 
 /**
