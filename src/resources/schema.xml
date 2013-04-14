@@ -902,6 +902,7 @@
    <field name="locator" type="string" indexed="true" stored="true" required="true" /> 
    <field name="subOf" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="instanceOf" type="string" indexed="true" stored="true"/>
+   <field name="tranClose" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="restrictions" type="string" indexed="false" stored="true" multiValued="true"/>
    <field name="creatorId" type="string" indexed="true" stored="true"/>
    <field name="lastEditDate" type="tdate" indexed="true" stored="true"/>
@@ -1018,6 +1019,7 @@
    
    <!-- Tuple fields -->
    <field name="tupleTheme" type="string" indexed="true" stored="true"/>
+   <field name="tupleSig" type="string" indexed="true" stored="true"/>
    <field name="tupleObject" type="string" indexed="true" stored="true"/>
    <field name="tupleObjectType" type="string" indexed="true" stored="true"/>
    <field name="tupleSubject" type="string" indexed="true" stored="true"/>
@@ -1034,7 +1036,7 @@
    <!-- Topic map fields -->
    <field name="mergeReasonRules" type="string" indexed="true" stored="true"  multiValued="true"/>
    <field name="mergeList" type="string" indexed="true" stored="true"  multiValued="true"/>
-   <field name="mergetuple" type="string" indexed="true" stored="true"  />
+   <field name="mergetuple" type="string" indexed="true" stored="true" multiValued="true" />
    <!-- Harvesting fields defined in IHarvestingOntology -->
    <field name="clusterWeight" type="double" indexed="true" stored="true"/>  
    <field name="clusterMembers" type="string" indexed="true" stored="true" multiValued="true"/>
