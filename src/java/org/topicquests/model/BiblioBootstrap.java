@@ -63,7 +63,7 @@ public class BiblioBootstrap extends BootstrapBase implements IBootstrap  {
 		//CLASSES
 		makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,IBiblioLegend.BLOG_PUBLICATION_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Blog Publication Type", "The TopicQuests Biblio typology blog publication type.", result);
 		makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,IBiblioLegend.BOOK_PUBLICATION_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Book Publication Type", "The TopicQuests Biblio typology book publication type.", result);
-		makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,IBiblioLegend.CITATION_NODE_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Citation Node Type", "The TopicQuests Biblio typology citation node type.", result);
+		makeSubclassNode(ITopicQuestsOntology.NODE_TYPE,IBiblioLegend.CITATION_NODE_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Citation Node Type", "The TopicQuests Biblio typology citation node type.", result);
 		makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,IBiblioLegend.DATABASE_PUBLICATION_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Database Publication Type", "The TopicQuests Biblio typology database publication type.", result);
 		makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,IBiblioLegend.JOURNAL_PUBLICATION_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Journal Publication Type", "The TopicQuests Biblio typology journal publication type.", result);
 		makeSubclassNode(ITopicQuestsOntology.CLASS_TYPE,IBiblioLegend.NEWSPAPER_PUBLICATION_TYPE,ICoreIcons.CLASS_ICON_SM,ICoreIcons.CLASS_ICON,"Newspaper Publication Type", "The TopicQuests Biblio typology newspaper publication type.", result);

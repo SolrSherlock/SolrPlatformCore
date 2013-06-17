@@ -25,21 +25,110 @@ import org.topicquests.common.api.IResult;
  *
  */
 public interface INodeModel {
-
-	  IResult newNode(String locator,String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
-	  IResult newNode(String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
+	
+	  /**
+	   * Return a new {@link INode} with the given <code>locator</code>
+	   * @param locator
+	   * @param label
+	   * @param description
+	   * @param lang
+	   * @param userId
+	   * @param smallImagePath
+	   * @param largeImagePath
+	   * @param isPrivate
+	   * @return
+	   */
+	  IResult newNode(String locator,String label, String description, String lang, 
+			  String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
 	  
-	  IResult newSubclassNode(String locator,String superclassLocator,String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
-	  IResult newSubclassNode(String superclassLocator,String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
+	  /**
+	   * Return a new {@link INode} with a database-created <code>locator</code>
+	   * @param label
+	   * @param description
+	   * @param lang
+	   * @param userId
+	   * @param smallImagePath
+	   * @param largeImagePath
+	   * @param isPrivate
+	   * @return
+	   */
+	  IResult newNode(String label, String description, String lang, String userId, 
+			  String smallImagePath, String largeImagePath, boolean isPrivate);
 	  
-	  IResult newInstanceNode(String locator,String typeLocator,String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
-	  IResult newInstanceNode(String typeLocator,String label, String description, String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
+	  /**
+	   * Return a new {@link INode} with the given <code>locator</code> and
+	   * <code>superclassLocator</code>
+	   * @param locator
+	   * @param superclassLocator
+	   * @param label
+	   * @param description
+	   * @param lang
+	   * @param userId
+	   * @param smallImagePath
+	   * @param largeImagePath
+	   * @param isPrivate
+	   * @return
+	   */
+	  IResult newSubclassNode(String locator,String superclassLocator,String label, 
+			  String description, String lang, String userId, String smallImagePath, 
+			  String largeImagePath, boolean isPrivate);
+	  
+	  /**
+	   * Return a new {@link INode} with the database-fabricated <code>locator</code>
+	   * and given <code>superclassLocator</code>
+	   * @param superclassLocator
+	   * @param label
+	   * @param description
+	   * @param lang
+	   * @param userId
+	   * @param smallImagePath
+	   * @param largeImagePath
+	   * @param isPrivate
+	   * @return
+	   */
+	  IResult newSubclassNode(String superclassLocator,String label, String description, 
+			  String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
+	  
+	  /**
+	   * Return a new {@link INode} with the given <code>locator</code> and
+	   * given <code>typeLocator</code>
+	   * @param locator
+	   * @param typeLocator
+	   * @param label
+	   * @param description
+	   * @param lang
+	   * @param userId
+	   * @param smallImagePath
+	   * @param largeImagePath
+	   * @param isPrivate
+	   * @return
+	   */
+	  IResult newInstanceNode(String locator,String typeLocator,String label, String description, 
+			  String lang, String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
+	  
+	  /**
+	   * Return a new {@link INode} with the database-fabricated <code>locator</code>
+	   * and given <code>typeLocator</code>
+	   * @param typeLocator
+	   * @param label
+	   * @param description
+	   * @param lang
+	   * @param userId
+	   * @param smallImagePath
+	   * @param largeImagePath
+	   * @param isPrivate
+	   * @return
+	   */
+	  IResult newInstanceNode(String typeLocator,String label, String description, String lang, 
+			  String userId, String smallImagePath, String largeImagePath, boolean isPrivate);
 
 	  
 	  /**
 	   * <p>Used for
 	   * <li>Editing an existing node to change a label or details or both</li>
 	   * <li>Adding or editing some language translation</li></p>
+	   * <p>Note: this has been subject to a lot of development; seems rarely used in favor of local
+	   * node surgical updates</p>
 	   * @param nodeLocator
 	   * @param updatedLabel  <code>null</code> if no change
 	   * @param updatedDetails <code>null</code> if no change
@@ -53,21 +142,7 @@ public interface INodeModel {
 	   */
 	  IResult updateNode(String nodeLocator, String updatedLabel, String updatedDetails, String language, 
 			  String oldLabel, String oldDetails, String userId, boolean isLanguageAddition, Set<String> credentials);
-	  
-	  /**
-	   * <p>Used for updating a node where a List property needs surgery other than a simple
-	   * addition, such as swapping a value. All changes must be made in <code>propertyValue</code></p>
-	   * <p>This works by fetching the old node, changing the value, removing version, deleting the old node,
-	   * and adding the modified node back</p>
-	   * @param nodeLocator
-	   * @param propertyKey
-	   * @param propertyValues
-	   * @param credentials
-	   * @return
-	   */
-//	  IResult updateNode(String nodeLocator, String propertyKey, List<String> propertyValues, Set<String> credentials);
-	 
-	  
+	  	  
 	  /**
 	   * <p>Perform a single, surgical change to a particular <code>key</code> (field)</p>
 	   * <p>NOTE: appropriate to Solr 4+ and requires that {@link ISolrClient} uses
@@ -106,7 +181,8 @@ public interface INodeModel {
 	   * @param isPrivate
 	   * @return
 	   */
-	  IResult relateNodes(String sourceNodeLocator, String targetNodeLocator, String relationTypeLocator, String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate);
+	  IResult relateNodes(String sourceNodeLocator, String targetNodeLocator, String relationTypeLocator, 
+			  String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate);
 	  
 	  /**
 	   * <p>Form an {@link ITuple} between <code>sourceNode</code> and <code>targetNode</code></p>
@@ -121,7 +197,8 @@ public interface INodeModel {
 	   * @param isPrivate
 	   * @return the locator of the created {@link ITuple}
 	   */
-	  IResult relateExistingNodes(INode sourceNode, INode targetNode, String relationTypeLocator, String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate);
+	  IResult relateExistingNodes(INode sourceNode, INode targetNode, String relationTypeLocator, 
+			  String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate);
 	  
 	  /**
 	   * <p>Form an {@link ITuple} between <code>sourceNodeLocator</code> and <code>targetNodeLocator</code></p>
@@ -136,7 +213,8 @@ public interface INodeModel {
 	   * @param isPrivate
 	   * @return
 	   */
-	  IResult relateNewNodes(INode sourceNode, INode targetNode, String relationTypeLocator, String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate);
+	  IResult relateNewNodes(INode sourceNode, INode targetNode, String relationTypeLocator, 
+			  String userId, String smallImagePath, String largeImagePath, boolean isTransclude, boolean isPrivate);
 	 
 	  /**
 	   * <p>Assert a merge, which fires up a VirtualProxy, creates a MergeAssertion node (not a triple)
@@ -152,7 +230,8 @@ public interface INodeModel {
 	   * @param userLocator
 	   * @return the locator of the created {@link ITuple}
 	   */
-	  IResult assertMerge(String sourceNodeLocator, String targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
+	  IResult assertMerge(String sourceNodeLocator, String targetNodeLocator, 
+			  Map<String, Double> mergeData, double mergeConfidence, String userLocator);
 	  
 	  /**
 	   * Assert that the two nodes <em>might need to be merged</em> based on the
@@ -165,7 +244,8 @@ public interface INodeModel {
 	   * @return
 	   * NOTE: not yet implemented
 	   */
-	  IResult assertPossibleMerge(String sourceNodeLocator, String targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
+	  IResult assertPossibleMerge(String sourceNodeLocator, String targetNodeLocator, 
+			  Map<String, Double> mergeData, double mergeConfidence, String userLocator);
 
 	  /**
 	   * Assert that these two nodes must not be merged; they were before, but for reasons given,
@@ -178,17 +258,18 @@ public interface INodeModel {
 	   * @return
 	   *Note: not implemented yet
 	   */
-	  IResult assertUnmerge(String sourceNodeLocator, INode targetNodeLocator, Map<String, Double> mergeData, double mergeConfidence, String userLocator);
+	  IResult assertUnmerge(String sourceNodeLocator, INode targetNodeLocator, 
+			  Map<String, Double> mergeData, double mergeConfidence, String userLocator);
 	  
 	  /**
-	   * 
+	   * Removes the identified node
 	   * @param locator
 	   * @return
 	   */
 	  IResult removeNode(String locator);
 	  
 	  /**
-	   * Return a weak credentials based on <code>userId</code>
+	   * Return a <em>weak</em> credentials based on <code>userId</code>
 	   * @param userId
 	   * @return
 	   */

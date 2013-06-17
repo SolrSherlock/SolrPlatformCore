@@ -26,7 +26,11 @@ import org.topicquests.solr.Solr3Client;
  */
 public interface ISolrDataProvider extends IDataProvider {
 	
-	ISolrClient getSolrClient();
+	 /**
+	  * Return the {@link} ISolrClient in this system.
+	  * @return
+	  */
+	 ISolrClient getSolrClient();
 	
 	 /**
 	  * <p>Map must include locator, version and any other fields that are changed</p>

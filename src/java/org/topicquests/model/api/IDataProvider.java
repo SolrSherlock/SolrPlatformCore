@@ -28,25 +28,51 @@ import org.topicquests.solr.QueryUtil;
  */
 public interface IDataProvider {
 
-	INodeModel getNodeModel();
+	  /**
+	   * Return the {@link INodeModel} installed in this system
+	   * @return
+	   */
+	  INodeModel getNodeModel();
 	
-	ITupleQuery getTupleQuery();
+	  /**
+	   * Return the {@link ITupleQuery installed in this system
+	   * @return
+	   */
+  	  ITupleQuery getTupleQuery();
 	
-	/**
-	 * Remove an {@link INode} from the internal cache
-	 * @param nodeLocator
-	 */
-	void removeFromCache(String nodeLocator);
+	  /**
+	   * Remove an {@link INode} from the internal cache
+	   * @param nodeLocator
+	   */
+	  void removeFromCache(String nodeLocator);
 	
 	  /**
 	   * Returns a UUID String
 	   * @return
 	   */
 	  String getUUID();
+	  
+	  /**
+	   * Returns a UUID String with a <code>prefix</code>
+	   * @param prefix
+	   * @return
+	   */
 	  String getUUID_Pre(String prefix);
+	  
+	  /**
+	   * Return a UUID String with a <code>suffix</code>
+	   * @param suffix
+	   * @return
+	   */
 	  String getUUID_Post(String suffix);
 	  
+	  /**
+	   * <p>Install an {@link IMergeImplementation} in this system</p>
+	   * <p>The implementation is declared in the <code>config.xml</code> file</p>
+	   * @param merger
+	   */
 	  void setMergeBean(IMergeImplementation merger);
+	  
 	  /**
 	   * Export the entire database to <code>out</code>
 	   * @param out
@@ -106,6 +132,12 @@ public interface IDataProvider {
 	   */
 	  IResult getNodeView(String locator, Set<String>credentials);
 	  
+	  /**
+	   * <p>Remove a node from the database</p>
+	   * <p>This is used for all nodes and tuples</p>
+	   * @param locator
+	   * @return
+	   */
 	  IResult removeNode(String locator);
 
 	  /**
@@ -116,7 +148,7 @@ public interface IDataProvider {
 	  IResult putNode(INode node);
 	  
 	  /**
-	   * Put <code>node</code> in the database. Subject to harvest
+	   * Put <code>node</code> in the database. Subject to harvest; no merge performed
 	   * @param node
 	   * @return
 	   */
@@ -132,28 +164,19 @@ public interface IDataProvider {
 	   */
 	  IResult getVirtualNodeIfExists(String locator, Set<String>credentials);
 	  
-		/**
-		 * Returns a Boolean <code>true if there exists an {@link ITuple} of <code>relationLocator</code> and
-		 * either a <em>subject</em> or </em>object</em> identified by <code>theLocator</code>
-		 * @param theLocator
-		 * @param relationLocator
-		 * @return
-		 */
-		IResult existsTupleBySubjectOrObjectAndRelation(String theLocator, String relationLocator);
-
-		/**
-		 * <p>Will list only those nodes for which sufficient credentials are presented,
-		 * if a given node is private</p>
-		 * @param nameString
-		 * @param credentials
-		 * @return
-		 */
-//	  IResult listNodesByNameString(String nameString, Set<String> credentials);
-	  
-//	  IResult listNodesByNameStringLike(String nameFragment, int start, int count, Set<String> credentials);
+	  /**
+	   * Returns a Boolean <code>true if there exists an {@link ITuple} of 
+	   * <code>relationLocator</code> and
+	   * either a <em>subject</em> or </em>object</em> identified by <code>theLocator</code>
+	   * @param theLocator
+	   * @param relationLocator
+	   * @return
+	   */
+	  IResult existsTupleBySubjectOrObjectAndRelation(String theLocator, String relationLocator);
 
 	  /**
-	   * Tests whether <code>nodeLocator</code> is of type or a subclass of <code>targetTypeLocator</code>
+	   * <p>Tests whether <code>nodeLocator</code> is of type or a subclass of 
+	   * <code>targetTypeLocator</code></p>
 	   * @param nodeLocator
 	   * @param targetTypeLocator
 	   * @param credentials
@@ -161,11 +184,34 @@ public interface IDataProvider {
 	   */
 	  IResult nodeIsA(String nodeLocator, String targetTypeLocator, Set<String> credentials);
 	  
-	  
+	  /**
+	   * <p>List nodes associated with <code>psi</code></p>
+	   * <p>Note: a <code>psi</code> is theoretically a <em>unique</em> identifier
+	   * for a node; there shoule be just one node returned, if any.</p>
+	   * @param psi
+	   * @param start
+	   * @param count
+	   * @param credentials
+	   * @return
+	   */
 	  IResult listNodesByPSI(String psi, int start, int count, Set<String> credentials);
 	  
+	  /**
+	   * <p>List nodes by the combination of a <code>label</code> and <code>typeLocator</code></p>
+	   * <p>TODO: requires language parameter</p>
+	   * @param label
+	   * @param typeLocator
+	   * @param start
+	   * @param count
+	   * @param credentials
+	   * @return
+	   */
 	  IResult listNodesByLabelAndType(String label, String typeLocator,int start, int count, Set<String> credentials);
 	  
+	  /**
+	   * <p>List nodes by <code>label</code></p>
+	   * <p>TODO: requires language parameter</p>
+	   */
 	  IResult listNodesByLabel(String label,int start, int count, Set<String> credentials);
 	  
 	  /**
@@ -173,6 +219,7 @@ public interface IDataProvider {
 	   * <p>A <em>wildcard</em> is added before and after <code>labelFragment</code></p>
 	   * <p>Example: given the string "My favorite topic"; would be matched with My, favorite, or topic</p>
 	   * <p>Results are case sensitive</p>
+	   * <p>Note: requires language parameter</p>
 	   * @param labelFragment
 	   * @param start
 	   * @param count
@@ -181,12 +228,45 @@ public interface IDataProvider {
 	   */
 	  IResult listNodesByLabelLike(String labelFragment, int start, int count, Set<String> credentials);
 	  
+	  /**
+	   * <p>Return nodes with details that are <em>like</em> <code>detailsFragment</code></p>
+	   * <p>Note: requires language parameter</p>
+	   * @param detailsFragment
+	   * @param start
+	   * @param count
+	   * @param credentials
+	   * @return
+	   */
 	  IResult listNodesByDetailsLike(String detailsFragment, int start, int count, Set<String> credentials);
 	  
+	  /**
+	   * Answer a particular Solr query string
+	   * @param queryString
+	   * @param start
+	   * @param count
+	   * @param credentials
+	   * @return
+	   */
 	  IResult listNodesByQuery(String queryString,int start, int count, Set<String> credentials);
 	  
+	  /**
+	   * Return nodes created by <code>creatorId</code>
+	   * @param creatorId
+	   * @param start
+	   * @param count
+	   * @param credentials
+	   * @return
+	   */
 	  IResult listNodesByCreatorId(String creatorId, int start, int count, Set<String> credentials);
 	  
+	  /**
+	   * Return nodes of type <code>typeLocator</code>
+	   * @param typeLocator
+	   * @param start
+	   * @param count
+	   * @param credentials
+	   * @return
+	   */
 	  IResult listNodesByType(String typeLocator,int start, int count, Set<String> credentials);
 	  
 	  /**
@@ -198,6 +278,7 @@ public interface IDataProvider {
 	   * @return
 	   */
 	  IResult listTuplesBySignature(String signature, int start, int count, Set<String>credentials);
+	  
 	  /**
 	   * Really, this is the same as <code>listNodesByType</code>
 	   * @param typeLocator
@@ -219,22 +300,19 @@ public interface IDataProvider {
 	   */
 	  IResult listTrimmedInstanceNodes(String typeLocator, int start, int count, Set<String>credentials);
 	  
-	  
+	  /**
+	   * List nodes which are subclasses of <code>superclassLocator</code>
+	   * @param superclassLocator
+	   * @param start
+	   * @param count
+	   * @param credentials
+	   * @return
+	   */
 	  IResult listSubclassNodes(String superclassLocator, int start, int count, Set<String> credentials);
 
 	  ////////////////////////////////////
 	  //Tuple support
-	  ///////////////////////////////////
-	  /**
-	   * Return a list of <code>ITuple</code> objects inside an {@link IResult} object
-	   * @param predType
-	   * @param subjectId
-	   * @param start
-	   * @param count
-	   * @return -- an IResult object that contains a List[ITuple] or an error message
-	   */
-//	  IResult listTuplesByPredTypeAndSubjectId(String predType, String subjectId, int start, int count);
-	  
+	  ///////////////////////////////////	  
 	  
 	  /**
 	   * 
@@ -251,21 +329,7 @@ public interface IDataProvider {
 	   */
 	  IResult getTuple(String tupleLocator, Set<String> credentials);
 	  
-	  
-//	  /**
-//	   * @deprecated
-//	   * @param tuple
-//	   * @return
-//	   */
-//	  IResult updateTuple(ITuple tuple);
-	  
-//	  /**
-//	   * @deprecated
-//	   * @param tuple
-//	   * @return
-//	   */
-//	  IResult removeTuple(ITuple tuple);
-	  
+	  	  
 	  /**
 	   * Behaves as if to <em>replace</em> <code>node</code>
 	   * @param node

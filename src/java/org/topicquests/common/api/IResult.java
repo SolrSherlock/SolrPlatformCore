@@ -21,25 +21,45 @@ package org.topicquests.common.api;
  */
 public interface IResult {
 	
+	/**
+	 * Return <code>true</code> if any error message was added
+	 * @return
+	 */
 	boolean hasError();
 	
+	/**
+	 * Return the accumulated error messages
+	 * @return
+	 */
 	String getErrorString();
 	
+	/**
+	 * Add an error message
+	 * @param e
+	 */
 	void addErrorString(String e);
 	
+	/**
+	 * Return the primary object
+	 * @return can return <code>null</code>
+	 */
 	Object getResultObject();
 	
 	/**
-	 * Primary result
+	 * Set the primary result
 	 * @param v
 	 */
 	void setResultObject(Object v);
 
 	/**
-	 * Additional result
-	 * @param v
+	 * Set an additional result
+	 * @param v 
 	 */
 	void setResultObjectA(Object v);
 	
+	/**
+	 * Return an additional result
+	 * @return can return <code>null</code>
+	 */
 	Object getResultObjectA();
 }

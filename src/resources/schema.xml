@@ -898,7 +898,7 @@
        when adding a document.
    -->
    <!-- Fields for TopicQuests Topic Map -->
-   <!-- Node fields definied in ITopicQuestsOntology -->
+   <!-- Node fields defined in ITopicQuestsOntology -->
    <field name="locator" type="string" indexed="true" stored="true" required="true" /> 
    <field name="subOf" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="instanceOf" type="string" indexed="true" stored="true"/>

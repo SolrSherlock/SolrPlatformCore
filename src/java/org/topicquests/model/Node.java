@@ -16,10 +16,6 @@
 package org.topicquests.model;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
-//import net.sf.json.JSONObject;
-//import net.sf.json.JSONSerializer;
 
 import org.json.simple.JSONObject;
 

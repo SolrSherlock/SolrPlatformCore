@@ -36,12 +36,18 @@ import java.util.Map;
 public interface ITuple extends INode {
 	
 	
+	/**
+	 * Set relational weight
+	 * @param weight
+	 */
 	void setRelationWeight(double weight);
+	
 	/**
 	 * Can return <code>-9999</code> if this {@link ITuple} is not weighted
 	 * @return
 	 */
 	double getRelationWeight();
+	
 	/**
 	 * <p>Object refers to the object of a {subject,predicate,object} triple.</p>
 	 * <p>An object could be one of
@@ -52,12 +58,37 @@ public interface ITuple extends INode {
 	 * @param value
 	 */
 	void setObject(String value);
+	
+	/**
+	 * Set the object's type
+	 * @param typeLocator
+	 */
 	void setObjectType(String typeLocator);
+	
+	/**
+	 * Return the object
+	 * @return
+	 */
 	String getObject();
+	
+	/**
+	 * Return the object's type
+	 * @return
+	 */
 	String getObjectType();
 	
+	/**
+	 * Set the object's role
+	 * @param roleLocator
+	 */
 	void setObjectRole(String roleLocator);
+	
+	/**
+	 * Return the object's role
+	 * @return can return <code>null</code>
+	 */
 	String getObjectRole();
+	
 	/**
 	 * <p>A subject is the subject in a {subject,predicate,object} triple</p>
 	 * <p>A subject is always the locator (identifier) for another entity, which could be one of
@@ -66,6 +97,11 @@ public interface ITuple extends INode {
 	 * @param locator
 	 */
 	void setSubjectLocator(String locator);
+	
+	/**
+	 * Return the subject locator
+	 * @return
+	 */
 	String getSubjectLocator();
 	
 	/**
@@ -74,6 +110,11 @@ public interface ITuple extends INode {
 	 * @param subjectType
 	 */
 	void setSubjectType(String subjectType);
+	
+	/**
+	 * Return the subject's type
+	 * @return
+	 */
 	String getSubjectType();
 	
 	/**
@@ -83,7 +124,7 @@ public interface ITuple extends INode {
 	void setSubjectRole(String roleLocator);
 	
 	/**
-	 * 
+	 * Return the subject/s role
 	 * @return can return <code>null</code>
 	 */
 	String getSubjectRole();
@@ -101,13 +142,23 @@ public interface ITuple extends INode {
 	 * @param signature
 	 */
 	void setSignature(String signature);
+	
+	/**
+	 * Return this tuple's signature
+	 * @return can return <code>null</code>
+	 */
 	String getSignature();
+	
 	/**
 	 * Utility
 	 * @param t
 	 */
 	void setIsTransclude(String t);
 	
+	/**
+	 * Return <code>true</code> if this tuple represents a transcluded node
+	 * @return
+	 */
 	boolean getIsTransclude();
 	
 	/**
@@ -116,8 +167,16 @@ public interface ITuple extends INode {
 	 */
 	void addScope(String scopeLocator);
 	
+	/**
+	 * Add a merge reason given by fired merge rules
+	 * @param reason
+	 */
 	void addMergeReason(String reason);
 	
+	/**
+	 * Return merge reasons
+	 * @return can return <code>null</code>
+	 */
 	List<String> listMergeReasons();
 	
 	/**
