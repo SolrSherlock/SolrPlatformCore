@@ -29,7 +29,7 @@ import org.topicquests.solr.api.ISolrDataProvider;
 import org.topicquests.util.LoggingPlatform;
 import org.topicquests.model.Node;
 
-import org.apache.solr.schema.DateField;
+import org.apache.solr.schema.TrieDateField;
 
 /**
  * @author park
@@ -38,7 +38,7 @@ import org.apache.solr.schema.DateField;
 public class SolrNodeModel implements INodeModel {
 	private LoggingPlatform log = LoggingPlatform.getInstance();
 	private ISolrDataProvider database;
-	private DateField dateField;
+	private TrieDateField dateField;
 	private IMergeImplementation merger;
 
 	/**
@@ -50,7 +50,7 @@ public class SolrNodeModel implements INodeModel {
 		//not all instances will include merge capabilities
 		if (merger != null)
 			merger.setNodeModel(this);
-		dateField = new DateField();
+		dateField = new TrieDateField();
 	}
 
 	/* (non-Javadoc)
