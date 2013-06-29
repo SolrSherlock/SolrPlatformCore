@@ -19,7 +19,11 @@
 			that two agents, while booting, will decide to begin the
 			bootstrap process at the same time is not nil.
 	 -->
-	<parameter name="ShouldBootstrap" value="No" /> 
+	<parameter name="ShouldBootstrap" value="Yes" /> 
+	
+	<!-- Select either stand-along clint or SolrCloud client
+	 -->
+	<parameter name="SolrClient" value="org.topicquests.solr.Solr3Client" /> 
 
 	<!-- 
 		The core TopicQuests topic map platform has an internal merge function which

@@ -46,11 +46,8 @@ public class Solr3Client implements ISolrClient {
 	private HttpSolrServer harvestServer;
 	
 
-	/**
-	 * @param solrURL
-	 * @throws Exception
-	 */
-	public Solr3Client(String solrURL) throws Exception {
+	@Override
+	public void init(String solrURL) throws Exception {
 		System.out.println("SERVER "+solrURL);
 		server = new HttpSolrServer(solrURL);
 		server.getHttpClient().getParams().setParameter("update.chain", "merge");
@@ -408,5 +405,6 @@ public class Solr3Client implements ISolrClient {
 		result.setResultObject(new Integer(status));
 		return result;
 	}
+
 
 }

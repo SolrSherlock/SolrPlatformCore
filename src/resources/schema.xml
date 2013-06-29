@@ -903,6 +903,7 @@
    <field name="subOf" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="instanceOf" type="string" indexed="true" stored="true"/>
    <field name="tranClose" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="transcludes" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="restrictions" type="string" indexed="false" stored="true" multiValued="true"/>
    <field name="creatorId" type="string" indexed="true" stored="true"/>
    <field name="lastEditDate" type="tdate" indexed="true" stored="true"/>

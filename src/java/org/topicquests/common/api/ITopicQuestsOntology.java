@@ -159,6 +159,7 @@ public interface ITopicQuestsOntology {
 		    // can't see where this is used
 			TRANSCLUDED_ROOT_PROXY_PROPERTY 			= "TranscludedRootProxyProperty", //????
 		   
+			TRANSCLUDE_LIST_PROPERTY					= "transcludes",
 			/**
 			 * Added to Merge Assertion Node
 			 */

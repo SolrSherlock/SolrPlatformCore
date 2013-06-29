@@ -27,6 +27,14 @@ import org.topicquests.common.api.IResult;
  */
 public interface ISolrClient {
 
+	/**
+	 * Initialize: make SolrClient a config property to boot
+	 * with <code>Class.forName</code>
+	 * @param solrURL
+	 * @throws Exception
+	 */
+	void init(String solrURL) throws Exception;
+	
 	 /**
 	  * Returns the SolrJ server
 	  * @return

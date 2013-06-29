@@ -57,7 +57,11 @@ public class SolrEnvironment {
 	void init(Hashtable<String,Object>p) {
 		props = p;
 		try {
-			solr = new Solr3Client(getStringProperty("SolrURL")); //TODO Solr4Client for testing
+			String ccp = getStringProperty("SolrClient");
+			Class o = Class.forName(ccp);
+			solr = (ISolrClient)o.newInstance();
+			solr.init(getStringProperty("SolrURL"));
+//			solr = new Solr3Client(getStringProperty("SolrURL")); //TODO Solr4Client for testing
 			record("Solr4Client started");
 			System.out.println("AAAA "+getStringProperty("MapCacheSize"));
 			int cachesize = Integer.parseInt(getStringProperty("MapCacheSize"));
@@ -66,7 +70,7 @@ public class SolrEnvironment {
 			String cp = (String)props.get("MergeImplementation");
 			//this installation might not deal with merge bean
 			if (cp != null) {
-				Class o = Class.forName(cp);
+				o = Class.forName(cp);
 				merger = (IMergeImplementation)o.newInstance();
 				merger.init(this);
 				database.setMergeBean(merger);

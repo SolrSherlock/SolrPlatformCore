@@ -159,6 +159,7 @@ public class CoreBootstrap extends BootstrapBase implements IBootstrap {
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.MERGE_LIST_PROPERTY,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Merge List Property Type", "The TopicQuests typology merge list property type.", result);
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.MERGE_TUPLE_PROPERTY,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Merge Tuple Property Type", "The TopicQuests typology merge tuple property type.", result);
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.BACKLINK_LIST_PROPERTY,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Backlink List Property Type", "The TopicQuests typology backlink list property type.", result);
+			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.TRANSCLUDE_LIST_PROPERTY,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Transclude List Property Type", "The TopicQuests typology transclude list property type.", result);
 
 			
 			makeSubclassNode(ITopicQuestsOntology.PROPERTY_TYPE,ITopicQuestsOntology.GRAPH_CONCEPT_LIST_PROPERTY_TYPE,ICoreIcons.PROPERTY_ICON_SM,ICoreIcons.PROPERTY_ICON,"Graph Concept List Property Type", "The TopicQuests typology graph concept list property type.", result);

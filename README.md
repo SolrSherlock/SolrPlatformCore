@@ -4,11 +4,14 @@ SolrPlatformCore
 A collection of classes and methods common to most TopicQuests Solr projects
 
 Status: *pre-alpha*<br/>
-Latest edit: 20130619
+Latest edit: 20130628
 ## Background ##
 There are a number of functions which are common to TopicQuests topic map and Solr projects. Namely, the APIs which allow to create and manipulate topics in a topic map, using the Solr platform as the database.
 
 ## Update History ##
+20130628
+	Modify SolrEnvironment to load the ISolrClient according to a new config file property: SolrClient; this allows for swapping in either a single Solr installation client, or a SolrCloud client.
+	Added a new field for listing "transcludes" of a node
 20130619
 	Udate to Solr 4.3.1 required code change for depricated java class
 20130617

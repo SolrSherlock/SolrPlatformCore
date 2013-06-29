@@ -49,14 +49,13 @@ import org.topicquests.solr.api.ISolrClient;
 public class Solr4Client implements ISolrClient {
 	private CloudSolrServer server; //TODO SolrCloudServer
 
-	/**
-	 * 
-	 */
-	public Solr4Client(String solrURL) throws Exception {
-		server = new CloudSolrServer(solrURL);
-		//server.setParser(new XMLResponseParser()); //TODO
-	}
 
+	@Override
+	public void init(String solrURL) throws Exception {
+		server = new CloudSolrServer(solrURL);
+		// TODO Auto-generated method stub
+		
+	}
 	public SolrServer getSolrServer() {
 		return server;
 	}
@@ -212,5 +211,6 @@ public class Solr4Client implements ISolrClient {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 }
