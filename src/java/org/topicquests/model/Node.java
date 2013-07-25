@@ -33,6 +33,7 @@ import org.topicquests.common.ResultPojo;
 import org.topicquests.common.api.IResult;
 import org.topicquests.common.api.ITopicQuestsOntology;
 import org.topicquests.common.api.IRelationsLegend;
+import org.topicquests.util.JSONUtil;
 
 /**
  * @author park
@@ -55,7 +56,7 @@ public class Node implements
 	 * @param props 
 	 */
 	public Node(Map props) {
-		properties = new JSONObject(props);
+		properties = JSONUtil.map2JSONObject(props);
 	}
 	
 	 JSONObject jsonToMap(Map<String,Object> props) {
