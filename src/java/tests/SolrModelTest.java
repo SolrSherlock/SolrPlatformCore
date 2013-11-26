@@ -16,12 +16,12 @@
 package tests;
 import java.util.*;
 
-import org.topicquests.model.Node;
 import org.topicquests.model.api.INode;
 import org.topicquests.model.api.INodeModel;
+import org.topicquests.solr.Node;
 import org.topicquests.solr.SolrEnvironment;
 import org.topicquests.solr.api.ISolrDataProvider;
-import org.topicquests.solr.api.ISolrModel;
+import org.topicquests.solr.api.ISolrQueryModel;
 import org.topicquests.solr.api.ISolrQueryIterator;
 import org.topicquests.common.api.IRelationsLegend;
 import org.topicquests.common.api.IResult;
@@ -34,7 +34,7 @@ public class SolrModelTest {
 	private SolrEnvironment environment;
 	private ISolrDataProvider database;
 	private INodeModel nodeModel;
-	private ISolrModel solrModel;
+	private ISolrQueryModel solrModel;
 	private String aLabel = "My first label";
 	private String bLabel = "My second label";
 	private String aDetails = "My first details";
@@ -46,7 +46,7 @@ public class SolrModelTest {
 	 */
 	public SolrModelTest() {
 		environment = new SolrEnvironment();
-		database = environment.getDataProvider();
+		database = (ISolrDataProvider)environment.getDataProvider();
 		nodeModel = database.getNodeModel();
 		solrModel = environment.getSolrModel();
 		runTest();

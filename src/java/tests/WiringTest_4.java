@@ -13,14 +13,14 @@ import java.util.Date;
 import org.apache.solr.schema.DateField;
 import org.topicquests.common.ResultPojo;
 import org.topicquests.common.api.IResult;
-import org.topicquests.model.Node;
 import org.topicquests.model.api.INode;
 import org.topicquests.model.api.INodeModel;
+import org.topicquests.solr.Node;
 import org.topicquests.solr.SolrEnvironment;
 import org.topicquests.solr.SolrDataProvider;
 import org.topicquests.solr.SolrNodeModel;
 import org.topicquests.solr.api.ISolrDataProvider;
-import org.topicquests.solr.api.ISolrModel;
+import org.topicquests.solr.api.ISolrQueryModel;
 import org.topicquests.solr.api.ISolrQueryIterator;
 
 /**
@@ -31,7 +31,7 @@ public class WiringTest_4 {
 	private SolrEnvironment environment;
 	private ISolrDataProvider solr;
 	private INodeModel model;
-	private ISolrModel solrModel;
+	private ISolrQueryModel solrModel;
 
 	/**
 	 * 

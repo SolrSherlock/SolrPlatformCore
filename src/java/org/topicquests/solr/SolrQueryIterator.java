@@ -38,7 +38,7 @@ public class SolrQueryIterator implements ISolrQueryIterator {
 	 */
 	public SolrQueryIterator(SolrEnvironment e) {
 		environment = e;
-		solr = environment.getDataProvider();
+		solr = (ISolrDataProvider)environment.getDataProvider();
 	}
 
 	/* (non-Javadoc)

@@ -31,7 +31,6 @@ import java.net.URLDecoder;
 import org.topicquests.common.ResultPojo;
 import org.topicquests.common.api.IResult;
 import org.topicquests.common.api.ITopicQuestsOntology;
-import org.topicquests.model.Node;
 import org.topicquests.model.api.INode;
 import org.topicquests.model.api.ITuple;
 import org.topicquests.model.api.IXMLFields;

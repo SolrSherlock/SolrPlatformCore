@@ -10,22 +10,22 @@ import org.topicquests.common.Utils;
 import org.topicquests.common.api.ICoreIcons;
 import org.topicquests.common.api.IResult;
 import org.topicquests.common.api.ITopicQuestsOntology;
-import org.topicquests.model.api.IMergeImplementation;
+import org.topicquests.model.Environment;
 import org.topicquests.model.api.INode;
 import org.topicquests.model.api.INodeModel;
 import org.topicquests.model.api.ITuple;
 import org.topicquests.model.api.ITupleQuery;
 import org.topicquests.solr.SolrEnvironment;
 import org.topicquests.solr.api.ISolrDataProvider;
-import org.topicquests.solr.api.ISolrQueryIterator;
+import org.topicquests.solr.api.ISolrMergeImplementation;
 import org.topicquests.util.LoggingPlatform;
 
 /**
  * @author park
  *
  */
-public class MergeBean implements IMergeImplementation {
-	private LoggingPlatform log = LoggingPlatform.getInstance();
+public class MergeBean implements ISolrMergeImplementation {
+	private LoggingPlatform log = LoggingPlatform.getInstance("logger.properties");
 	private SolrEnvironment solrEnvironment;
 	private ISolrDataProvider database;
 	private ITupleQuery tupleQuery;
@@ -38,7 +38,7 @@ public class MergeBean implements IMergeImplementation {
 	@Override
 	public void init(SolrEnvironment environment) {
 		solrEnvironment = environment;
-		database = solrEnvironment.getDataProvider();
+		database = (ISolrDataProvider)solrEnvironment.getDataProvider();
 		tupleQuery = database.getTupleQuery();
 		credentials = new HashSet<String>();
 		credentials.add("admin");
@@ -132,7 +132,13 @@ public class MergeBean implements IMergeImplementation {
 		
 		if (firstly.hasError())
 			result.addErrorString(firstly.getErrorString());
+		////////////////////////////////////////////////////////
 		//try to fetch a virtualNode for targetNodeLocator
+		// THIS IS CRUCIAL!
+		// getVirtualNodeIfExists looks to see if targetNodeLocator is already
+		// in some MergeTuple; if so, return the virtualNodeLocator found
+		// in that tuple
+		////////////////////////////////////////////////////////
 		firstly = database.getVirtualNodeIfExists(targetNodeLocator, credentials); 
 		INode theTarget = (INode)firstly.getResultObject();
 		log.logDebug("MergeBean-0a TARGET "+targetNodeLocator+" "+theTarget.getLocator()+" "+theTarget.getIsVirtualProxy());
@@ -262,6 +268,10 @@ public class MergeBean implements IMergeImplementation {
 		//    NEED TO SORT OUT WHAT IS HERE
 		/////////////////////////////////////////////////
 		} else {
+			//////////////////////////////////////
+			//This is a case where we are updating a VirtualNode due to another
+			//merge
+			//////////////////////////////////////
 			if (virtualNodeLocator != null) {
 				if (targetVnodeExists) {
 					log.logDebug("VIRTUAL-1 "+virtualNode.toXML());
@@ -498,6 +508,7 @@ public class MergeBean implements IMergeImplementation {
 	 * @return
 	 */
 	boolean setUnionProperties(INode virtualNode, INode mergedNode) {
+		//if any surgery is performed, result = true
 		boolean result = false;
 				//Copy over all labels and details for both nodes
 			//	installLabelsAndDetails(virtualNode,mergedNode);
@@ -528,7 +539,12 @@ public class MergeBean implements IMergeImplementation {
 						os instanceof Integer ||
 						os instanceof Float ||
 						os instanceof Boolean) {
-						if (ov == null) {
+						///////////////////////////////////////
+						//This may be where we are creating dates as strings
+						//and messing things up
+						///////////////////////////////////////
+						if (ov == null && !(key.equals(ITopicQuestsOntology.CREATED_DATE_PROPERTY) ||
+										    key.equals(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY))) {
 							virtMap.put(key, os);
 							result = true;
 						} else if (ov instanceof String && os instanceof String) {
@@ -571,6 +587,9 @@ public class MergeBean implements IMergeImplementation {
 					}
 			}
 		}
+		//update last edit
+		if (result)
+			virtMap.put(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY, new Date());
 		return result;
 	}
 	
@@ -660,7 +679,7 @@ public class MergeBean implements IMergeImplementation {
 		log.logDebug("MergeBean.reWireNodeGraph- "+mergedProxyLocator+" "+virtualProxyLocator+" "+mergeTupleLocator);
 		IResult result = new ResultPojo();
 		//Find all tuples where mergedProxyLocator isA subject and fix them
-		IResult xx = tupleQuery.listTuplesBySubject(mergedProxyLocator, credentials);
+		IResult xx = tupleQuery.listTuplesBySubject(mergedProxyLocator, 0,-1,credentials);
 		if (xx.hasError())
 			result.addErrorString(xx.getErrorString());
 		List<INode>n = (List<INode>)xx.getResultObject();
@@ -683,7 +702,7 @@ public class MergeBean implements IMergeImplementation {
 			}
 		}
 		//Find all tuples where mergedProxyLocator isA object and fix them
-		xx = tupleQuery.listTuplesByObjectLocator(mergedProxyLocator, credentials);
+		xx = tupleQuery.listTuplesByObjectLocator(mergedProxyLocator, 0,-1, credentials);
 		if (xx.hasError())
 			result.addErrorString(xx.getErrorString());
 		n = (List<INode>)xx.getResultObject();
@@ -720,6 +739,10 @@ public class MergeBean implements IMergeImplementation {
 		//surgery earlier, which means the version number will be out of date.
 		//Two options: remove the version number, or refetch the tuple before
 		// doing this surgery
+		///////////////////////////////
+		//TODO: must pay attention to changes in date fields
+		///////////////////////////////
+		log.logDebug("MergeBean.performTupleSergery "+t.getLocator()+" "+newLocator);
 		t.getProperties().remove(ITopicQuestsOntology.SOLR_VERSION_PROPERTY_TYPE);
 		IResult result = nodeModel.changePropertyValue(t, key, newLocator);
 		
@@ -874,6 +897,10 @@ public class MergeBean implements IMergeImplementation {
 			result.addErrorString(x.getErrorString());
 		return result;
 
+	}
+	@Override
+	public void init(Environment environment) {
+		// NOT USED
 	}
 
 }

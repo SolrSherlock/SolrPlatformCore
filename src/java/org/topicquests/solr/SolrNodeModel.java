@@ -15,7 +15,7 @@
  */
 package org.topicquests.solr;
 
-import org.apache.log4j.Logger;
+//import org.apache.log4j.Logger;
 import java.util.*;
 
 import org.topicquests.common.api.IResult;
@@ -27,7 +27,6 @@ import org.topicquests.model.api.ITuple;
 import org.topicquests.common.api.ITopicQuestsOntology;
 import org.topicquests.solr.api.ISolrDataProvider;
 import org.topicquests.util.LoggingPlatform;
-import org.topicquests.model.Node;
 
 import org.apache.solr.schema.TrieDateField;
 
@@ -36,7 +35,7 @@ import org.apache.solr.schema.TrieDateField;
  *
  */
 public class SolrNodeModel implements INodeModel {
-	private LoggingPlatform log = LoggingPlatform.getInstance();
+	private LoggingPlatform log = LoggingPlatform.getLiveInstance();
 	private ISolrDataProvider database;
 	private TrieDateField dateField;
 	private IMergeImplementation merger;

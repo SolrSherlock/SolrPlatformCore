@@ -17,7 +17,7 @@ package org.topicquests.solr;
 
 import java.io.Writer;
 import java.util.*;
-import java.net.URLEncoder;
+//import java.net.URLEncoder;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.topicquests.common.ResultPojo;
@@ -27,8 +27,8 @@ import org.topicquests.common.api.ITopicQuestsOntology;
 import org.topicquests.solr.api.ISolrClient;
 import org.topicquests.solr.api.ISolrDataProvider;
 import org.topicquests.util.LoggingPlatform;
+import org.topicquests.model.Environment;
 import org.topicquests.model.api.INodeModel;
-import org.topicquests.model.Node;
 import org.topicquests.model.api.IMergeImplementation;
 import org.topicquests.model.api.INode;
 import org.topicquests.model.api.ITuple;
@@ -39,14 +39,14 @@ import org.nex.util.LRUCache;
 
 import org.apache.commons.collections.CollectionUtils;
 //use parseDate to get a Date from a Solr date string
-import org.apache.solr.common.util.DateUtil;
+//import org.apache.solr.common.util.DateUtil;
 
 /**
  * @author park
  *
  */
 public class SolrDataProvider implements ISolrDataProvider {
-	private LoggingPlatform log = LoggingPlatform.getInstance();
+	private LoggingPlatform log = LoggingPlatform.getLiveInstance();
 	private ISolrClient client;
 	private INodeModel _model;
 	private ITupleQuery tupleQuery;
@@ -686,6 +686,12 @@ log.logDebug("SolrDataProvider.getVirtualNodeIfExists-1 "+locator+" "+lox);			}
 		IResult result = runQuery(query, start, count, credentials);
 		listNodes(result,credentials);
 		return result;
+	}
+
+	@Override
+	public IResult init(Environment env, int cachesize) {
+		//NOT USED
+		return null;
 	}
 
 

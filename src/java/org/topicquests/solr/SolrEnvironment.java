@@ -16,15 +16,11 @@
 package org.topicquests.solr;
 import java.util.*;
 
-import org.nex.config.ConfigPullParser;
 import org.topicquests.common.api.IConsoleDisplay;
-import org.topicquests.model.BiblioBootstrap;
-import org.topicquests.model.CoreBootstrap;
-import org.topicquests.model.RelationsBootstrap;
-import org.topicquests.model.api.IMergeImplementation;
+import org.topicquests.model.Environment;
 import org.topicquests.solr.api.ISolrClient;
-import org.topicquests.solr.api.ISolrDataProvider;
-import org.topicquests.solr.api.ISolrModel;
+import org.topicquests.solr.api.ISolrMergeImplementation;
+import org.topicquests.solr.api.ISolrQueryModel;
 import org.topicquests.solr.api.ISolrQueryIterator;
 import org.topicquests.util.LoggingPlatform;
 import org.topicquests.util.Tracer;
@@ -34,70 +30,72 @@ import org.topicquests.util.Tracer;
  * @author park
  *
  */
-public class SolrEnvironment {
-	private LoggingPlatform log = LoggingPlatform.getInstance();
-	private Hashtable<String,Object>props;
+public class SolrEnvironment extends Environment {
 	private ISolrClient solr;
-	private ISolrDataProvider database;
-	private ISolrModel model;
+	private ISolrQueryModel model;
 	private IConsoleDisplay host;
 
 	/**
 	 * @param p
 	 */
-	public SolrEnvironment(Hashtable<String,Object>p) {
-		init(p);
+	public SolrEnvironment(Map<String,Object>p) {
+		super(p,true);
+		init();
 	}
 	
 	public SolrEnvironment() {
-		ConfigPullParser p = new ConfigPullParser("config-props.xml");
-		init(p.getProperties());
+		super(true);
+		init();
 	}
 	
-	void init(Hashtable<String,Object>p) {
-		props = p;
+	void init() {
 		try {
+			List<List<String>>solrs = (List<List<String>>)getProperties().get("SolrURLs");
+			List<List<String>>zookeeps= (List<List<String>>)getProperties().get("ZKHosts");
+			log.logDebug("SolrEnvironment.init "+solrs+" "+zookeeps);
+			List<String> solrservers = new ArrayList<String>();
+			int len = solrs.size();
+			for (int i=0;i<len;i++)
+				solrservers.add(((List<String>)solrs.get(i)).get(1));
+			List<String> zookeepers = new ArrayList<String>(); 
+			len = zookeeps.size();
+			for (int i=0;i<len;i++)
+				zookeepers.add(((List<String>)zookeeps.get(i)).get(1));	
 			String ccp = getStringProperty("SolrClient");
+System.out.println("SolrEnvironment-1 "+ccp);
 			Class o = Class.forName(ccp);
 			solr = (ISolrClient)o.newInstance();
-			solr.init(getStringProperty("SolrURL"));
-//			solr = new Solr3Client(getStringProperty("SolrURL")); //TODO Solr4Client for testing
-			record("Solr4Client started");
-			System.out.println("AAAA "+getStringProperty("MapCacheSize"));
+			solr.init(solrservers, zookeepers);
+System.out.println("SolrEnvironment-2 "+solr);
+			record("SolrClient started");
+System.out.println("AAAA "+getStringProperty("MapCacheSize"));
 			int cachesize = Integer.parseInt(getStringProperty("MapCacheSize"));
 			database = new SolrDataProvider(this,cachesize );
-			IMergeImplementation merger;
-			String cp = (String)props.get("MergeImplementation");
+			ISolrMergeImplementation merger;
+			String cp = getStringProperty("MergeImplementation");
 			//this installation might not deal with merge bean
 			if (cp != null) {
 				o = Class.forName(cp);
-				merger = (IMergeImplementation)o.newInstance();
+				merger = (ISolrMergeImplementation)o.newInstance();
 				merger.init(this);
 				database.setMergeBean(merger);
 			}
-			model = new SolrModel(this);
-			String bs = (String)props.get("ShouldBootstrap");
+			model = new SolrQueryModel(this);
+			String bs = getStringProperty("ShouldBootstrap");
 			boolean shouldBootstrap = false; // default value
 			if (bs != null)
 				shouldBootstrap = bs.equalsIgnoreCase("Yes");
 			if (shouldBootstrap)
 				bootstrap();
 		} catch (Exception e) {
+System.out.println("SolrEnvironment error "+e.getMessage());
 			logError(e.getMessage(),e);
 			e.printStackTrace();
 		}
-		logDebug("Started");
-	}
-	void bootstrap() {
-		CoreBootstrap cbs = new CoreBootstrap(database);
-		cbs.bootstrap();
-		BiblioBootstrap bbs = new BiblioBootstrap(database);
-		bbs.bootstrap();
-		RelationsBootstrap rbs = new RelationsBootstrap(database);
-		rbs.bootstrap();
+		logDebug("SolrEnvironment Started");
 	}
 	
-	public ISolrModel getSolrModel() {
+	public ISolrQueryModel getSolrModel() {
 		return model;
 	}
 	
@@ -105,16 +103,9 @@ public class SolrEnvironment {
 		return solr;
 	}
 	
-	public ISolrDataProvider getDataProvider() {
-		return database;
-	}
-	public Map<String,Object> getProperties() {
-		return props;
-	}
-	
-	public String getStringProperty(String key) {
-		return (String)props.get(key);
-	}
+//	public ISolrDataProvider getDataProvider() {
+//		return database;
+//	}
 		
 	public void setConsoleDisplay(IConsoleDisplay d) {
 		host = d;
@@ -135,25 +126,7 @@ public class SolrEnvironment {
 		return new SolrQueryIterator(this);
 	}
 	
-	
 	public void shutDown() {
-		//
-	}
-	/////////////////////////////
-	// Utilities
-	public void logDebug(String msg) {
-		log.logDebug(msg);
-	}
-	
-	public void logError(String msg, Exception e) {
-		log.logError(msg,e);
-	}
-	
-	public void record(String msg) {
-		log.record(msg);
-	}
-
-	public Tracer getTracer(String name) {
-		return log.getTracer(name);
+		super.shutDown();
 	}
 }

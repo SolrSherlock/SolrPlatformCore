@@ -3,12 +3,14 @@ SolrPlatformCore
 
 A collection of classes and methods common to most TopicQuests Solr projects
 
-Status: *pre-alpha*<br/>
-Latest edit: 201306725
+Status: *alpha*<br/>
+Latest edit: 20131125
 ## Background ##
 There are a number of functions which are common to TopicQuests topic map and Solr projects. Namely, the APIs which allow to create and manipulate topics in a topic map, using the Solr platform as the database.
 
 ## Update History ##
+20131125
+	Refactored everything not related directly to Solr out to the TopicQuestsCoreAPI project.
 20130725
 	Corrected error in creation of JSONObject in Node.java;
 	Added JSONUtil to convert Map to JSONObject<br/>

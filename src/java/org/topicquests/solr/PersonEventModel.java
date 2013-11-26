@@ -40,7 +40,7 @@ public class PersonEventModel implements IPersonEventModel {
 	 */
 	public PersonEventModel(SolrEnvironment e) {
 		environment = e;
-		solr = environment.getDataProvider();
+		solr = (ISolrDataProvider)environment.getDataProvider();
 		model = solr.getNodeModel();
 		
 	}

@@ -15,6 +15,7 @@
  */
 package org.topicquests.solr.api;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Collection;
 
@@ -30,10 +31,11 @@ public interface ISolrClient {
 	/**
 	 * Initialize: make SolrClient a config property to boot
 	 * with <code>Class.forName</code>
-	 * @param solrURL
+	 * @param solrURLs
+	 * @param zookeeperURL can be <code>null</code> if not SolrCloud
 	 * @throws Exception
 	 */
-	void init(String solrURL) throws Exception;
+	void init(List<String> solrURLs, List<String> zookeeperURLs) throws Exception;
 	
 	 /**
 	  * Returns the SolrJ server

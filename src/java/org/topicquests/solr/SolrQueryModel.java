@@ -18,14 +18,14 @@ package org.topicquests.solr;
 import java.util.Set;
 
 import org.topicquests.common.api.ITopicQuestsOntology;
-import org.topicquests.solr.api.ISolrModel;
+import org.topicquests.solr.api.ISolrQueryModel;
 import org.topicquests.solr.api.ISolrQueryIterator;
 
 /**
  * @author park
  *
  */
-public class SolrModel implements ISolrModel {
+public class SolrQueryModel implements ISolrQueryModel {
 	private SolrEnvironment environment;
 	private final String labelQuery = ITopicQuestsOntology.LABEL_PROPERTY;
 	private final String detailsQuery = ITopicQuestsOntology.DETAILS_PROPERTY;
@@ -35,12 +35,12 @@ public class SolrModel implements ISolrModel {
 	/**
 	 * 
 	 */
-	public SolrModel(SolrEnvironment e) {
+	public SolrQueryModel(SolrEnvironment e) {
 		environment = e;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.topicquests.solr.api.ISolrModel#listNodesByLabel(java.lang.String, java.lang.String, int, java.util.Set)
+	 * @see org.topicquests.solr.api.ISolrQueryModel#listNodesByLabel(java.lang.String, java.lang.String, int, java.util.Set)
 	 */
 	@Override
 	public ISolrQueryIterator listNodesByLabel(String label, String language,
@@ -52,7 +52,7 @@ public class SolrModel implements ISolrModel {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.topicquests.solr.api.ISolrModel#listNodesByDetails(java.lang.String, java.lang.String, int, java.util.Set)
+	 * @see org.topicquests.solr.api.ISolrQueryModel#listNodesByDetails(java.lang.String, java.lang.String, int, java.util.Set)
 	 */
 	@Override
 	public ISolrQueryIterator listNodesByDetails(String details,
@@ -63,7 +63,7 @@ public class SolrModel implements ISolrModel {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.topicquests.solr.api.ISolrModel#listTuplesByRelation(java.lang.String, int, java.util.Set)
+	 * @see org.topicquests.solr.api.ISolrQueryModel#listTuplesByRelation(java.lang.String, int, java.util.Set)
 	 */
 	@Override
 	public ISolrQueryIterator listTuplesByRelation(String relationType,
@@ -89,7 +89,9 @@ public class SolrModel implements ISolrModel {
 	@Override
 	public ISolrQueryIterator listNodeInstances(String nodeTypeLocator,
 			int count, Set<String> credentials) {
-		return listTuplesByRelation(nodeTypeLocator, count, credentials);
+		ISolrQueryIterator itr = new SolrQueryIterator(environment);
+		itr.start(instanceQuery+nodeTypeLocator, count, credentials);
+		return itr;
 	}
 
 	@Override

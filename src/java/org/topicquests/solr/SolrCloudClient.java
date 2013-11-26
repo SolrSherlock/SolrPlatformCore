@@ -16,14 +16,13 @@
 package org.topicquests.solr;
 import java.util.*;
 
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.impl.CloudSolrServer;
+import org.apache.solr.client.solrj.impl.LBHttpSolrServer;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
-//import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.schema.TrieDateField;
 import org.apache.solr.client.solrj.request.UpdateRequest;
 
@@ -33,42 +32,76 @@ import org.topicquests.common.ResultPojo;
 import org.topicquests.solr.api.ISolrClient;
 import org.topicquests.util.LoggingPlatform;
 
-//import org.apache.solr.update.DirectUpdateHandler2;
 
 /**
  * @author park
- * For non-SolrCloud use
+ * For SolrCloud use
  */
-public class Solr3Client implements ISolrClient {
+public class SolrCloudClient implements ISolrClient {
 	private LoggingPlatform log = LoggingPlatform.getLiveInstance();
-	private HttpSolrServer server;
-	private HttpSolrServer updateServer;
-	private HttpSolrServer harvestServer;
+	private CloudSolrServer server;
+	private LBHttpSolrServer serverServer;
+	private CloudSolrServer updateServer;
+	private LBHttpSolrServer updateServerServer;
+	private CloudSolrServer harvestServer;
+	private LBHttpSolrServer harvestServerServer;
+	//TODO make that a config value
+	private boolean shouldCommit = false;
 	
+	/////////////////////////////////////////////////
+	// API
 
+	/**
+	 * @param solrURL TODO: fix to 
+	 * zkHost The client endpoint of the zookeeper quorum containing the cloud state,
+	 */
 	@Override
-	public void init(List<String> solrURLs, List<String> zookeeperURL) throws Exception {
-System.out.println("SERVER3-1 "+solrURLs);
-		String solrURL = null;
+	public void init(List<String> solrURLs, List<String> zookeeperURLs) throws Exception {
+		log.logDebug("SolrCloudClient- "+solrURLs+" "+zookeeperURLs);
+		StringBuilder sbuf = new StringBuilder();
+		int len = solrURLs.size();
+		for (int i=0;i<len;i++) {
+			sbuf.append(solrURLs.get(i));
+			sbuf.append(",");
+		}
+		String solrURL = sbuf.toString();
+		if (solrURL.endsWith(","))
+			solrURL = solrURL.substring(0, (solrURL.length()-1));
+		StringBuilder zbuf = new StringBuilder();
+		len = zookeeperURLs.size();
+		for (int i=0;i<len;i++) {
+			zbuf.append(zookeeperURLs.get(i));
+			zbuf.append(",");
+		}
+		String zookeeperURL = zbuf.toString();
+		if (zookeeperURL.endsWith(","))
+			zookeeperURL = zookeeperURL.substring(0, (zookeeperURL.length()-1));
+		log.logDebug("SolrCloudClient-1 "+solrURL+" | "+zookeeperURL);
 		try {
-			//This is a single server with no zookeeper
-			solrURL = solrURLs.get(0);
+			//TODO make default collection a config property
 			//NOTE: can pass in a client (String baseURL, HttpClient client)
 			//to which you set params
-			server = new HttpSolrServer(solrURL);
+			//We use LBHttpSolrServer so that we can setup query params below
+			// there is no way to getParams() from CloudSolrServer
+			serverServer = new LBHttpSolrServer(solrURL);
+			System.out.println("SolrCloudClient-2 "+serverServer);
+			server = new CloudSolrServer(zookeeperURL, serverServer);
+	    	server.setDefaultCollection("collection1");
+			System.out.println("SolrCloudClient-3 "+server);
+			harvestServerServer = new LBHttpSolrServer(solrURL);
+			harvestServer = new CloudSolrServer(solrURL, harvestServerServer);
+	    	harvestServer.setDefaultCollection("collection1");
+			updateServerServer = new LBHttpSolrServer(solrURL);
+			updateServer = new CloudSolrServer(zookeeperURL, updateServerServer);
+	    	updateServer.setDefaultCollection("collection1");
+	System.out.println("SolrCloudClient-2 "+server);
+			serverServer.getHttpClient().getParams().setParameter("update.chain", "merge");
+			harvestServerServer.getHttpClient().getParams().setParameter("update.chain", "harvest");
+			updateServerServer.getHttpClient().getParams().setParameter("update.chain", "partial");
 		} catch (Exception e) {
 			System.out.println("SHIT "+e.getMessage());
+			log.logError(e.getMessage(), e);
 		}
-System.out.println("SERVER3-2 "+server);
-		server.getHttpClient().getParams().setParameter("update.chain", "merge");
-		server.setParser(new XMLResponseParser());
-		updateServer = new HttpSolrServer(solrURL);
-		updateServer.getHttpClient().getParams().setParameter("update.chain", "partial");
-		updateServer.setParser(new XMLResponseParser());
-		harvestServer = new HttpSolrServer(solrURL);
-		harvestServer.getHttpClient().getParams().setParameter("update.chain", "harvest");
-		harvestServer.setParser(new XMLResponseParser());
-System.out.println("SERVER3-3 ");
 	}
 
 	public SolrServer getSolrServer() {
@@ -83,22 +116,20 @@ System.out.println("SERVER3-3 ");
 	 * @return  NamedList<Object> in result or error string
 	 */
 	public IResult runQuery(String queryString, int start, int count) {
-		System.out.println("Solr3Client.runQuery- "+queryString+" "+start+" "+count);
+		log.logDebug("SolrCloudClient.runQuery- "+queryString+" "+start+" "+count);
 		IResult result = new ResultPojo();
 		SolrQuery parameters = new SolrQuery();
 		parameters.set("q", queryString);
 		parameters.setStart(start);
 		if (count > -1)
 			parameters.setRows(count);
-		//force result as JSON
-//		parameters.set("wt", "json");
-		System.out.println("Solr3Client.runQuery-1 "+parameters.toString());
+		log.logDebug("SolrCloudClient.runQuery-1 "+parameters.toString());
 		try {
 			QueryResponse x = server.query(parameters);
-			System.out.println("ZZZZ "+x.getResults());
+			log.logDebug("SolrCloudClient.runQuery-2 "+x.getResults());
 			result.setResultObject(x.getResults());
 		} catch (Exception e) {
-			log.logError("SolrClient3.runQuery "+e.getMessage()+" "+queryString, e);
+			log.logError("SolrCloudClient.runQuery "+e.getMessage()+" "+queryString, e);
 			result.addErrorString(e.getMessage());
 		}
 		return result;
@@ -126,6 +157,7 @@ System.out.println("SERVER3-3 ");
 		try {
 			UpdateResponse ur = server.deleteById(locator);
 			int status = ur.getStatus();
+			//TODO not sure about this one
 			server.commit();
 			result.setResultObject(new Integer(status));
 		} catch (Exception e) {
@@ -146,18 +178,21 @@ System.out.println("SERVER3-3 ");
 			//result.addErrorString("SolrClient got an empty document");
 			return result;
 		}
-		log.logDebug("Solr3Client.addData-1 "+fields.size());
+		log.logDebug("SolrCloudClient.addData-1 "+fields.size());
 		int status = 0;
 		try {
 			SolrInputDocument document = mapToDocument(fields);
-			System.out.println("Solr3Client.addData-2 "+document);
-			UpdateResponse response = server.add(document);
+			System.out.println("SolrCloudClient.addData-2 "+document);
+			UpdateResponse response = null;
+			if (shouldCommit) {
+				response = server.add(document);
+				server.commit();
+			} else
+				response = server.add(document, 2000);
 			status = response.getStatus();
-			//TODO full commit or soft commit?
-			server.commit();
 		} catch (Exception e) {
 			result.addErrorString(e.getMessage());
-			log.logError("Solr3Client.addData error-1 "+e.getMessage()+" "+fields,e);
+			log.logError("SolrCloudClient.addData error-1 "+e.getMessage()+" "+fields,e);
 		}
 		result.setResultObject(new Integer(status));
 		return result;
@@ -180,13 +215,16 @@ System.out.println("SERVER3-3 ");
 				} //else
 					// result.addErrorString("SolrClient got an empty document");
 			}
-			UpdateResponse response = server.add(docs);
+			UpdateResponse response = null;
+			if (shouldCommit) {
+				response = server.add(document);
+				server.commit();
+			} else
+				response = server.add(document, 2000);
 			status = response.getStatus();
-			//TODO full commit or soft commit?
-			server.commit();
 		} catch (Exception e) {
 			result.addErrorString(e.getMessage());
-			log.logError("Solr3Client.addData error-2 "+e.getMessage()+" "+documents,e);
+			log.logError("SolrCloudClient.addData error-2 "+e.getMessage()+" "+documents,e);
 		}
 		result.setResultObject(new Integer(status));
 
@@ -194,62 +232,6 @@ System.out.println("SERVER3-3 ");
 	}
 
 
-
-	/**
-	 * Fetch by way of the node's <em>locator</em> field
-	 * @param locator
-	 * @param start
-	 * @param count
-	 * @return
-	 */
-	public IResult getByProxyLocator(String locator, int start, int count) {
-		String q = ITopicQuestsOntology.LOCATOR_PROPERTY+":"+locator;
-		System.out.println("QQQ "+q);
-		IResult result = runQuery(q, start, count);
-		return result;		
-	}
-
-	@Override
-	public IResult partialUpdateData(Map<String, Object> fields) {
-		log.logDebug("Solr3Client.partialUpdateData "+fields);
-		return addUpdateData(fields);
-	}
-	
-
-	@Override
-	public void shutDown() {
-		server.shutdown();
-	}
-
-
-
-	@Override
-	public IResult addDataNoMerge(Map<String, Object> fields) {
-		IResult result = new ResultPojo();
-		if (fields.isEmpty()) {
-			//result.addErrorString("SolrClient got an empty document");
-			return result;
-		}
-		log.logDebug("Solr3Client.addDataNoMerge-1 "+fields.size());
-		int status = 0;
-		try {
-			SolrInputDocument document = mapToDocument(fields);
-			System.out.println("Solr3Client.addData-2 "+document);
-			UpdateResponse response = harvestServer.add(document);
-			status = response.getStatus();
-			//TODO full commit or soft commit?
-			server.commit();
-		} catch (Exception e) {
-			result.addErrorString(e.getMessage());
-			log.logError("Solr3Client.addDataNoMerge error-1 "+e.getMessage()+" "+fields,e);
-		}
-		result.setResultObject(new Integer(status));
-		return result;
-	}
-	
-	/////////////////////////////////////
-	//Support
-	/////////////////////////////////////
 	/**
 	 * <p>Convert a Map of fields to a {@link SolrInputDocument}</p>
 	 * <p>Must deal with a variety of field types</p>
@@ -257,8 +239,8 @@ System.out.println("SERVER3-3 ");
 	 * @return
 	 * @throws Exception
 	 */
-	private SolrInputDocument mapToDocument(Map<String,Object> fields) throws Exception {
-		log.logDebug("Solr3Client.mapToDocument- "+fields);
+	SolrInputDocument mapToDocument(Map<String,Object> fields) throws Exception {
+		log.logDebug("SolrCloudClient.mapToDocument- "+fields);
 		SolrInputDocument document = new SolrInputDocument();
 		Iterator<String>keys = fields.keySet().iterator();
 		String key;
@@ -267,9 +249,9 @@ System.out.println("SERVER3-3 ");
 		while (keys.hasNext()) {
 			key = keys.next();
 			o = fields.get(key);
-			System.out.println("Solr3Client.addData-2 "+key+" | "+o);
+			System.out.println("SolrCloudClient.addData-2 "+key+" | "+o);
 			//here we try to catch the obvious ones
-			//TODO expand the test for Float
+			//TODO expand the tests for Float
 			if (key.startsWith(ITopicQuestsOntology.LABEL_PROPERTY) || 
 				key.startsWith(ITopicQuestsOntology.DETAILS_PROPERTY)) {
 				if (o instanceof String)
@@ -287,10 +269,10 @@ System.out.println("SERVER3-3 ");
 				o instanceof Long ||
 				o instanceof Float
 				) {
-//				System.out.println("Solr3Client.addData-2 "+o); 
+//				System.out.println("SolrCloudClient.addData-2 "+o); 
 					document.addField(key, o);
 			} else if (o instanceof List) {
-//				System.out.println("Solr3Client.addData-2list "+o); 
+//				System.out.println("SolrCloudClient.addData-2list "+o); 
 				lobj = (List<String>)o;
 				Iterator<String>itr = lobj.iterator();
 				while (itr.hasNext()) {
@@ -304,16 +286,77 @@ System.out.println("SERVER3-3 ");
 				} 
 			} else if (key.equals(ITopicQuestsOntology.CREATED_DATE_PROPERTY) ||
 					   key.equals(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY)) {
+				//TODO TrieDateField formatExternal is deprecated
 					document.addField(key,  TrieDateField.formatExternal((Date)o));
 			} else
-				throw new Exception ("Solr3Client.addData fail: "+key+" "+o);
+				throw new Exception ("SolrCloudClient.addData fail: "+key+" "+o);
 		}		
 		return document;
 	}
+	
+	/**
+	 * Fetch by way of the node's <em>locator</em> field
+	 * @param locator
+	 * @param start
+	 * @param count
+	 * @return
+	 */
+	public IResult getByProxyLocator(String locator, int start, int count) {
+		String q = ITopicQuestsOntology.LOCATOR_PROPERTY+":"+locator;
+		System.out.println("QQQ "+q);
+		IResult result = runQuery(q, start, count);
+		return result;		
+	}
+
+	@Override
+	public IResult partialUpdateData(Map<String, Object> fields) {
+		log.logDebug("SolrCloudClient.partialUpdateData "+fields);
+		return addUpdateData(fields);
+	}
+	
+
+	@Override
+	public void shutDown() {
+		server.shutdown();
+		updateServer.shutdown();
+		harvestServer.shutdown();
+	}
+
+
+	@Override
+	public IResult addDataNoMerge(Map<String, Object> fields) {
+		IResult result = new ResultPojo();
+		if (fields.isEmpty()) {
+			//result.addErrorString("SolrClient got an empty document");
+			return result;
+		}
+		log.logDebug("SolrCloudClient.addDataNoMerge-1 "+fields.size());
+		int status = 0;
+		try {
+			SolrInputDocument document = mapToDocument(fields);
+			System.out.println("SolrCloudClient.addData-2 "+document);
+			UpdateResponse response = null;
+			if (shouldCommit) {
+				response = harvestServer.add(document);
+				server.commit();
+			} else
+				response = harvestServer.add(document, 2000);
+			status = response.getStatus();
+		} catch (Exception e) {
+			result.addErrorString(e.getMessage());
+			log.logError("SolrCloudClient.addDataNoMerge error-1 "+e.getMessage()+" "+fields,e);
+		}
+		result.setResultObject(new Integer(status));
+		return result;
+	}
+
+
+	/////////////////////////////////////////////////
+	// Support
+	
 	private Map<String,Object> escapeMapQueryCulprits(Map<String,Object> m) {
 		Map<String,Object>result = m;
 		Object obj;
-		Map<String,Object>mx;
 		List<String>vx;
 		String key;
 		String vs;
@@ -340,6 +383,7 @@ System.out.println("SERVER3-3 ");
 		}
 		return culprits;
 	}
+
 	///////////////////////////////////////////////
 	// Partial updates use their own kind of map
 	// {
@@ -348,87 +392,31 @@ System.out.println("SERVER3-3 ");
 	//  fieldB={set=[<values>]}, 
 	//  fieldC={set=[values]}
 
-	private IResult addUpdateData(Map<String,Object>fields) {
+	 IResult addUpdateData(Map<String,Object>fields) {
 		IResult result = new ResultPojo();
 		if (fields.isEmpty()) {
 			//result.addErrorString("SolrClient got an empty document");
 			return result;
 		}
-		log.logDebug("Solr3Client.addUpdateData-1 "+fields.size());
+		log.logDebug("SolrCloudClient.addUpdateData-1 "+fields.size());
 		int status = 0;
 		try {
-			SolrInputDocument document = mapToDocument(fields); //updateMapToDocument(fields);
-			log.logDebug("Solr3Client.addUpdateData-2 "+document);
+			SolrInputDocument document = mapToDocument(fields); 
+			log.logDebug("SolrCloudClient.addUpdateData-2 "+document);
 			UpdateRequest ur = new UpdateRequest();
 			ur.add(document);
-			ur.setCommitWithin(1000);
+			ur.setCommitWithin(2000);
 			UpdateResponse response = ur.process(updateServer);
 			status = response.getStatus();
-			//TODO full commit or soft commit?
-			//server.commit();
+			//commitWithin means the commit will happen regardless
+			if (shouldCommit)
+				updateServer.commit();
 		} catch (Exception e) {
 			result.addErrorString(e.getMessage());
-			log.logError("Solr3Client.addUpdateData error-1 "+e.getMessage()+" "+fields,e);
+			log.logError("SolrCloudClient.addUpdateData error-1 "+e.getMessage()+" "+fields,e);
 		}
 		result.setResultObject(new Integer(status));
+
 		return result;
 	}
-	
-	/**  apparently not used
-	private SolrInputDocument updateMapToDocument(Map<String,Object> updateFields) {
-		log.logDebug("Solr3Client.updateMapToDocument- "+updateFields);
-		SolrInputDocument document = new SolrInputDocument();
-		String key;
-		Object obj;
-		Map<String,Object>mobj;
-		Map<String,Object>internalM;
-		Iterator<String>itr = updateFields.keySet().iterator();
-		Iterator<String>fitr;
-		String field;
-		List<String>fx;
-		Iterator<String>iitr;
-		String internalKey;
-		while (itr.hasNext()) {
-			key = itr.next();
-			obj = updateFields.get(key);
-			if (key.equals(ITopicQuestsOntology.LOCATOR_PROPERTY))
-				document.addField(key, obj);
-			else {
-				if (obj instanceof Map) {
-					mobj = (Map<String,Object>)obj;
-					fitr = mobj.keySet().iterator();
-					while (fitr.hasNext()) {
-						field = fitr.next();
-						obj = mobj.get(field);
-						if (obj instanceof Map) {
-							internalM = (Map<String,Object>)obj;
-							if (field.startsWith(ITopicQuestsOntology.LABEL_PROPERTY) || 
-								field.startsWith(ITopicQuestsOntology.DETAILS_PROPERTY)) {
-								iitr = internalM.keySet().iterator();
-								while (iitr.hasNext()) {
-									internalKey = iitr.next();
-									obj = internalM.get(internalKey);
-									if (obj instanceof List) {
-										fx = this.escapeQueryCulprits((List<String>)obj);
-										internalM.put(internalKey, fx);
-										document.addField(key,internalM);
-									} else {
-										document.addField(key, QueryUtil.escapeNodeData((String)obj));
-									}
-								}
-							} //TODO What about updated dates?
-							  //else if (field.startsWith(ITopicQuestsOntology.CREATED_DATE_PROPERTY) ||
-							  //         field.startsWith(ITopicQuestsOntology.LAST_EDIT_DATE_PROPERTY)) {
-						      //document.addField(key,  TrieDateField.formatExternal((Date)o));
-							  // }
-						} else {
-							document.addField(key, obj);
-						}
-					}
-				}
-			}
-		}
-		
-		return document;
-	} */
 }

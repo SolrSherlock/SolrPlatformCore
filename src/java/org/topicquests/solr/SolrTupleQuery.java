@@ -43,11 +43,11 @@ public class SolrTupleQuery implements ITupleQuery {
 	 */
 	@Override
 	public IResult listSubjectNodesByObjectAndRelation(String objectLocator,
-			String relationLocator, Set<String> credentials) {
+			String relationLocator, int start, int count, Set<String> credentials) {
 		String queryString = ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE+":"+relationLocator+ //the relation
 				" AND "+ITopicQuestsOntology.TUPLE_OBJECT_PROPERTY+":"+objectLocator; // an object
 		//NOTE: we need to run this as an iterator
-		IResult result = database.runQuery(queryString, 0, 50, credentials);
+		IResult result = database.runQuery(queryString, start, count, credentials);
 		return result;
 	}
 
@@ -56,12 +56,12 @@ public class SolrTupleQuery implements ITupleQuery {
 	 */
 	@Override
 	public IResult listObjectNodesBySubjectAndRelation(String subjectLocator,
-			String relationLocator, Set<String> credentials) {
+			String relationLocator, int start, int count, Set<String> credentials) {
 		String queryString = ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE+":"+relationLocator+ //the relation
 				" AND "+ITopicQuestsOntology.TUPLE_OBJECT_TYPE_PROPERTY+":"+ITopicQuestsOntology.NODE_TYPE+ //require only nodes, not literals
 				" AND "+ITopicQuestsOntology.TUPLE_SUBJECT_PROPERTY+":"+subjectLocator; // a subject
 		//NOTE: we need to run this as an iterator
-		IResult result = database.runQuery(queryString, 0, 50, credentials);
+		IResult result = database.runQuery(queryString, start, count, credentials);
 		return result;
 	}
 
@@ -71,13 +71,13 @@ public class SolrTupleQuery implements ITupleQuery {
 	@Override
 	public IResult listObjectNodesBySubjectAndRelationAndScope(
 			String subjectLocator, String relationLocator, String scopeLocator,
-			Set<String> credentials) {
+			int start, int count, Set<String> credentials) {
 		String queryString = ITopicQuestsOntology.INSTANCE_OF_PROPERTY_TYPE+":"+relationLocator+ //the relation
 				" AND "+ITopicQuestsOntology.TUPLE_OBJECT_TYPE_PROPERTY+":"+ITopicQuestsOntology.NODE_TYPE+ //require only nodes, not literals
 				" AND "+ITopicQuestsOntology.TUPLE_SUBJECT_PROPERTY+":"+subjectLocator + // a subject
 				" AND "+ITopicQuestsOntology.SCOPE_LIST_PROPERTY_TYPE+":"+scopeLocator; // the scope
 		//NOTE: we need to run this as an iterator
-		IResult result = database.runQuery(queryString, 0, 50, credentials);
+		IResult result = database.runQuery(queryString, start, count, credentials);
 		return result;
 	}
 
@@ -87,7 +87,7 @@ public class SolrTupleQuery implements ITupleQuery {
 	@Override
 	public IResult listSubjectNodesByObjectAndRelationAndScope(
 			String objectLocator, String relationLocator, String scopeLocator,
-			Set<String> credentials) {
+			int start, int count, Set<String> credentials) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -98,7 +98,7 @@ public class SolrTupleQuery implements ITupleQuery {
 	@Override
 	public IResult listSubjectNodesByRelationAndObjectRole(
 			String relationLocator, String objectRoleLocator,
-			Set<String> credentials) {
+			int start, int count, Set<String> credentials) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -109,7 +109,7 @@ public class SolrTupleQuery implements ITupleQuery {
 	@Override
 	public IResult listSubjectNodesByRelationAndSubjectRole(
 			String relationLocator, String subjectRoleLocator,
-			Set<String> credentials) {
+			int start, int count, Set<String> credentials) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -120,7 +120,7 @@ public class SolrTupleQuery implements ITupleQuery {
 	@Override
 	public IResult listObjectNodesByRelationAndSubjectRole(
 			String relationLocator, String subjectRoleLocator,
-			Set<String> credentials) {
+			int start, int count, Set<String> credentials) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -131,14 +131,14 @@ public class SolrTupleQuery implements ITupleQuery {
 	@Override
 	public IResult listObjectNodesByRelationAndObjectRole(
 			String relationLocator, String objectRoleLocator,
-			Set<String> credentials) {
+			int start, int count, Set<String> credentials) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public IResult listTuplesBySubject(String subjectLocator,
-			Set<String> credentials) {
+			int start, int count, Set<String> credentials) {
 		String queryString = ITopicQuestsOntology.TUPLE_SUBJECT_PROPERTY+":"+subjectLocator;
 		//NOTE: we need to run this as an iterator
 		IResult result = database.runQuery(queryString, 0, 50, credentials);
@@ -157,7 +157,7 @@ public class SolrTupleQuery implements ITupleQuery {
 
 	@Override
 	public IResult listTuplesByObjectLocator(String objectLocator,
-			Set<String> credentials) {
+			int start, int count, Set<String> credentials) {
 		String queryString = ITopicQuestsOntology.TUPLE_OBJECT_PROPERTY+":"+objectLocator;
 		//NOTE: we need to run this as an iterator
 		IResult result = database.runQuery(queryString, 0, 50, credentials);

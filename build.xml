@@ -46,7 +46,7 @@
 			deprecation="${compile.deprecation}" optimize="${optimize}" target="1.6">
 			<classpath refid="build.classpath" />
 		</javac>
-		<jar file="SolrPlatformCore.jar" basedir="${classes.dir}" />
+		<jar file="solr-platform-core-${buildversion}.jar" basedir="${classes.dir}" />
 	</target>
 </project>
 

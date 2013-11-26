@@ -24,7 +24,7 @@ import org.topicquests.model.api.ITuple;
  * @author park
  *
  */
-public interface ISolrModel {
+public interface ISolrQueryModel {
 	
 	/**
 	 * <p>Return an iterator which provides instances of {@link INode} which contain

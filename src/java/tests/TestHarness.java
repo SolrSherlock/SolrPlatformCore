@@ -26,7 +26,7 @@ public class TestHarness {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		LoggingPlatform logger = LoggingPlatform.getInstance();
+		LoggingPlatform logger = LoggingPlatform.getInstance("logger.properties");
 		System.out.println("Starting");
 		//new SolrQueryIteratorTest();
 		//new SolrModelTest();
